@@ -14,6 +14,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onUnlock }) => {
     e.preventDefault();
     if (username === 'admin' && password === 'admin123') {
       setError(false);
+      localStorage.setItem('lounge_admin_session_v1', 'true');
       onUnlock();
     } else {
       setError(true);

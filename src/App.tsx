@@ -10,6 +10,9 @@ import {
   saveAllLDLogs,
   loadAllLDLogs,
   resetAllDataToDemo,
+  exportDatabaseJSON,
+  importDatabaseJSON,
+  backupAllDataToLocalStorage,
 } from './utils/storage';
 import { getTodayDateString } from './utils/initialData';
 import { Header } from './components/Header';
@@ -20,7 +23,10 @@ import { StaffManagerModal } from './components/StaffManagerModal';
 import { AuthScreen } from './components/AuthScreen';
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  // Persist login state in localStorage
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
+    () => localStorage.getItem('lounge_admin_session_v1') === 'true'
+  );
   const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
   const [currentTab, setCurrentTab] = useState<TabType>('attendance');
 
@@ -40,6 +46,9 @@ export default function App() {
 
     const loadedLDs = getLDLogsForDate(selectedDate);
     setLdLogs(loadedLDs);
+
+    // Create an auto backup whenever data is loaded/refreshed
+    backupAllDataToLocalStorage();
   }, [selectedDate]);
 
   useEffect(() => {
@@ -48,8 +57,36 @@ export default function App() {
     }
   }, [refreshData, isAuthenticated]);
 
+  const handleLogout = () => {
+    localStorage.removeItem('lounge_admin_session_v1');
+    setIsAuthenticated(false);
+  };
+
+  const handleBackupData = () => {
+    exportDatabaseJSON();
+  };
+
+  const handleRestoreData = (jsonStr: string) => {
+    if (window.confirm('기존 데이터를 백업 파일로 복원하시겠습니까? (Restore data from backup file?)')) {
+      const success = importDatabaseJSON(jsonStr);
+      if (success) {
+        alert('데이터 복원이 완료되었습니다.');
+        refreshData();
+      } else {
+        alert('올바르지 않은 백업 파일 형식입니다.');
+      }
+    }
+  };
+
   if (!isAuthenticated) {
-    return <AuthScreen onUnlock={() => setIsAuthenticated(true)} />;
+    return (
+      <AuthScreen
+        onUnlock={() => {
+          localStorage.setItem('lounge_admin_session_v1', 'true');
+          setIsAuthenticated(true);
+        }}
+      />
+    );
   }
 
   // Handlers for Attendance
@@ -104,6 +141,9 @@ export default function App() {
         totalLDToday={totalLDToday}
         onOpenStaffManager={() => setIsStaffModalOpen(true)}
         onResetDemoData={handleResetDemoData}
+        onLogout={handleLogout}
+        onBackupData={handleBackupData}
+        onRestoreData={handleRestoreData}
       />
 
       {/* Main Content Area */}

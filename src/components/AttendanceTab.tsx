@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AttendanceRecord, Staff } from '../types';
-import { Users, CheckCircle2, AlertTriangle, XCircle, Search, Clock, Check, RefreshCw, ShieldAlert } from 'lucide-react';
+import { Users, CheckCircle2, AlertTriangle, XCircle, Search, Clock, RefreshCw, ShieldAlert } from 'lucide-react';
 import { SCHEDULE_OPTIONS } from '../utils/initialData';
 import { AttendanceCardList } from './AttendanceCardList';
 
@@ -121,17 +121,6 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
     });
   };
 
-  const handleMarkAllPresent = () => {
-    attendanceRecords.forEach((rec) => {
-      onUpdateRecord({
-        ...rec,
-        isLate: false,
-        isAbsent: false,
-        checkInTime: rec.checkInTime || '18:00',
-      });
-    });
-  };
-
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Overview Stat Cards */}
@@ -249,13 +238,6 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
         </div>
 
         <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-          <button
-            onClick={handleMarkAllPresent}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-700/50 rounded-lg text-xs font-medium transition-colors"
-          >
-            <Check className="w-3.5 h-3.5" />
-            <span>Mark All Present</span>
-          </button>
           <button
             onClick={onRefreshDate}
             className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-xs transition-colors"

@@ -46,6 +46,51 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
   const [newTableName, setNewTableName] = useState('');
   const [pendingLD, setPendingLD] = useState<{tableNo: string, staffId: string, amount: number, staffName: string} | null>(null);
 
+  // Mobile Fast Entry State
+  const [mobileSelectedTable, setMobileSelectedTable] = useState<string>(
+    () => masterTables[0] || 'T-1'
+  );
+  const [mobileSelectedStaffId, setMobileSelectedStaffId] = useState<string>(
+    () => activeStaffList[0]?.id || ''
+  );
+  const [toastNotification, setToastNotification] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastNotification(msg);
+    setTimeout(() => {
+      setToastNotification(null);
+    }, 2200);
+  };
+
+  const handleDirectAddLD = (tableNo: string, staffId: string, amount: number) => {
+    const staffObj = staffList.find((s) => s.id === staffId) || activeStaffList[0];
+    if (!staffObj || !tableNo) return;
+
+    const nowTime = new Date().toLocaleTimeString('ko-KR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+
+    onAddLog({
+      date: dateStr,
+      tableNo: tableNo.trim().toUpperCase(),
+      staffId: staffObj.id,
+      staffName: staffObj.name,
+      amount: amount,
+      drinkType: 'Standard LD',
+      timestamp: nowTime,
+    });
+
+    if (!activeTables.includes(tableNo)) {
+      setActiveTables((prev) => [...prev, tableNo]);
+    }
+
+    const sign = amount > 0 ? `+${amount}` : `${amount}`;
+    showToast(`✅ [${tableNo}] ${staffObj.name}: ${sign} LD recorded!`);
+  };
+
   // Table Manager Modal state
   const [showTableManager, setShowTableManager] = useState(false);
   const [managerNewTableInput, setManagerNewTableInput] = useState('');
@@ -183,6 +228,138 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
 
   return (
     <div className="space-y-6 animate-fadeIn">
+      {/* Toast Notification Banner */}
+      {toastNotification && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-emerald-400 text-slate-950 font-black px-5 py-2.5 rounded-full shadow-2xl border-2 border-emerald-200 text-xs sm:text-sm flex items-center gap-2 animate-bounce">
+          <Sparkles className="w-4 h-4 fill-slate-950" />
+          <span>{toastNotification}</span>
+        </div>
+      )}
+
+      {/* Mobile Smartphone Quick Entry Bar */}
+      <div className="lounge-card rounded-2xl p-4 sm:p-5 border-2 border-purple-500/50 shadow-2xl bg-gradient-to-br from-[#121626] to-[#181d33] space-y-3.5">
+        <div className="flex items-center justify-between border-b border-purple-900/40 pb-2.5">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-purple-600/30 text-purple-300 border border-purple-500/40">
+              <Wine className="w-5 h-5 text-cyan-300" />
+            </div>
+            <div>
+              <h2 className="text-sm sm:text-base font-black text-white tracking-wide flex items-center gap-2">
+                <span>📱 Mobile Smartphone Express Counter</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800">
+                  Fast 1-Tap Log
+                </span>
+              </h2>
+              <p className="text-[11px] text-slate-400">
+                Tap table &amp; staff below to log LD instantly on mobile phone
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 1. Quick Table Selection Chips */}
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block">
+            1. Select Table:
+          </label>
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 no-scrollbar">
+            {masterTables.map((tName) => {
+              const isSelected = mobileSelectedTable === tName;
+              return (
+                <button
+                  key={tName}
+                  onClick={() => setMobileSelectedTable(tName)}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 min-w-[56px] text-center ${
+                    isSelected
+                      ? 'bg-cyan-400 text-slate-950 shadow-lg shadow-cyan-500/40 font-black scale-105 ring-2 ring-cyan-200'
+                      : 'bg-slate-900/90 text-slate-300 border border-slate-700/80 hover:bg-slate-800'
+                  }`}
+                >
+                  {tName}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 2. Select Staff */}
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block">
+            2. Select Staff:
+          </label>
+          <select
+            value={mobileSelectedStaffId || activeStaffList[0]?.id || ''}
+            onChange={(e) => setMobileSelectedStaffId(e.target.value)}
+            className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-100 font-bold focus:outline-none focus:border-purple-500 h-11"
+          >
+            {activeStaffList.map((staff) => (
+              <option key={staff.id} value={staff.id}>
+                {staff.name} ({staff.role})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 3. Fast Tap Action Buttons (Big Touch Targets - 48px height) */}
+        <div className="grid grid-cols-4 gap-2 pt-1">
+          <button
+            onClick={() =>
+              handleDirectAddLD(
+                mobileSelectedTable,
+                mobileSelectedStaffId || activeStaffList[0]?.id,
+                -1
+              )
+            }
+            className="h-12 bg-rose-950/90 hover:bg-rose-900 text-rose-200 border border-rose-800 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1 active:scale-95 transition-all shadow-md"
+          >
+            <Minus className="w-4 h-4" />
+            <span>-1</span>
+          </button>
+
+          <button
+            onClick={() =>
+              handleDirectAddLD(
+                mobileSelectedTable,
+                mobileSelectedStaffId || activeStaffList[0]?.id,
+                1
+              )
+            }
+            className="h-12 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white border border-purple-400/50 rounded-xl font-black text-sm sm:text-base flex items-center justify-center gap-1 active:scale-95 transition-all shadow-lg shadow-purple-900/50"
+          >
+            <Plus className="w-4 h-4" />
+            <span>+1</span>
+          </button>
+
+          <button
+            onClick={() =>
+              handleDirectAddLD(
+                mobileSelectedTable,
+                mobileSelectedStaffId || activeStaffList[0]?.id,
+                2
+              )
+            }
+            className="h-12 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white border border-cyan-400/50 rounded-xl font-black text-sm sm:text-base flex items-center justify-center gap-1 active:scale-95 transition-all shadow-lg shadow-cyan-900/50"
+          >
+            <Plus className="w-4 h-4" />
+            <span>+2</span>
+          </button>
+
+          <button
+            onClick={() =>
+              handleDirectAddLD(
+                mobileSelectedTable,
+                mobileSelectedStaffId || activeStaffList[0]?.id,
+                3
+              )
+            }
+            className="h-12 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white border border-amber-400/50 rounded-xl font-black text-sm sm:text-base flex items-center justify-center gap-1 active:scale-95 transition-all shadow-lg shadow-amber-900/50"
+          >
+            <Plus className="w-4 h-4" />
+            <span>+3</span>
+          </button>
+        </div>
+      </div>
+
       {/* Top Controls: Table Preset Picker & Quick Add Table */}
       <div className="lounge-card rounded-xl p-4 space-y-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -362,21 +539,28 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
                 {/* Big (+ / -) Tally Buttons */}
                 <div className="flex items-center justify-between gap-1.5 pt-1">
                   <button
-                    onClick={() => handleAddLDClick(tableNo, currentAssignedStaffId, -1)}
+                    onClick={() => handleDirectAddLD(tableNo, currentAssignedStaffId, -1)}
                     disabled={totalLD <= 0}
-                    className="w-14 py-3 bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-800/60 rounded-xl font-bold text-lg flex items-center justify-center active:scale-95 transition-all disabled:opacity-30 shadow-md shrink-0"
+                    className="w-12 h-12 bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-800/60 rounded-xl font-bold text-base flex items-center justify-center active:scale-95 transition-all disabled:opacity-30 shadow-md shrink-0"
                     title="Decrease LD (-1)"
                   >
-                    <Minus className="w-5 h-5" />
+                    <Minus className="w-4 h-4" />
                   </button>
 
                   <div className="flex flex-1 gap-1.5">
                     <button
-                      onClick={() => handleAddLDClick(tableNo, currentAssignedStaffId, 1)}
-                      className="flex-1 py-3 bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white border border-purple-400/40 rounded-xl font-extrabold text-lg flex items-center justify-center gap-1 active:scale-95 transition-all shadow-lg shadow-purple-950/80"
+                      onClick={() => handleDirectAddLD(tableNo, currentAssignedStaffId, 1)}
+                      className="flex-1 h-12 bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white border border-purple-400/40 rounded-xl font-black text-base flex items-center justify-center gap-1 active:scale-95 transition-all shadow-lg shadow-purple-950/80"
                       title="Add 1 Drink (+1)"
                     >
                       <Plus className="w-4 h-4" /> +1
+                    </button>
+                    <button
+                      onClick={() => handleDirectAddLD(tableNo, currentAssignedStaffId, 2)}
+                      className="px-3 h-12 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white border border-cyan-400/40 rounded-xl font-black text-sm flex items-center justify-center gap-0.5 active:scale-95 transition-all shadow-lg shadow-cyan-950/80 shrink-0"
+                      title="Add 2 Drinks (+2)"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> +2
                     </button>
                   </div>
                 </div>

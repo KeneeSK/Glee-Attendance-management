@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TabType } from '../types';
-import { Calendar, Clock, Users, Wine, BarChart3, UserCog, RotateCcw, Music } from 'lucide-react';
+import { Calendar, Clock, Users, Wine, BarChart3, UserCog, RotateCcw, Music, LogOut, Download, Upload, ShieldCheck } from 'lucide-react';
 
 interface HeaderProps {
   currentTab: TabType;
@@ -11,6 +11,9 @@ interface HeaderProps {
   totalLDToday: number;
   onOpenStaffManager: () => void;
   onResetDemoData: () => void;
+  onLogout: () => void;
+  onBackupData: () => void;
+  onRestoreData: (jsonStr: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -22,8 +25,12 @@ export const Header: React.FC<HeaderProps> = ({
   totalLDToday,
   onOpenStaffManager,
   onResetDemoData,
+  onLogout,
+  onBackupData,
+  onRestoreData,
 }) => {
   const [timeStr, setTimeStr] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const updateTime = () => {
@@ -41,6 +48,20 @@ export const Header: React.FC<HeaderProps> = ({
     const timer = setInterval(updateTime, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (content) {
+        onRestoreData(content);
+      }
+    };
+    reader.readAsText(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-[#0b0e17]/90 backdrop-blur-md border-b border-purple-900/30 shadow-lg">
@@ -99,11 +120,37 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onOpenStaffManager}
               className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-colors"
-              title="Manage Roster"
+              title="Manage Staff Roster"
             >
               <UserCog className="w-3.5 h-3.5 text-purple-400" />
               <span className="hidden sm:inline">Roster</span>
             </button>
+
+            {/* Backup JSON Button */}
+            <button
+              onClick={onBackupData}
+              className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium bg-cyan-950/80 hover:bg-cyan-900/90 text-cyan-200 border border-cyan-800/60 rounded-lg transition-colors"
+              title="Save Database Backup (JSON)"
+            >
+              <Download className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden md:inline">Backup</span>
+            </button>
+
+            {/* Restore JSON Button */}
+            <label
+              className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium bg-purple-950/80 hover:bg-purple-900/90 text-purple-200 border border-purple-800/60 rounded-lg transition-colors cursor-pointer"
+              title="Restore Database from Backup (JSON)"
+            >
+              <Upload className="w-3.5 h-3.5 text-purple-400" />
+              <span className="hidden md:inline">Restore</span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </label>
 
             <button
               onClick={onResetDemoData}
@@ -111,6 +158,16 @@ export const Header: React.FC<HeaderProps> = ({
               title="Reset Demo Data"
             >
               <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Logout / Lock Button */}
+            <button
+              onClick={onLogout}
+              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-rose-950/70 hover:bg-rose-900 text-rose-200 border border-rose-800/60 rounded-lg transition-colors ml-1"
+              title="Logout / Lock Admin Session"
+            >
+              <LogOut className="w-3.5 h-3.5 text-rose-400" />
+              <span className="hidden sm:inline">Logout</span>
             </button>
           </div>
         </div>

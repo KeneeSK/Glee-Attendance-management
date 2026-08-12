@@ -221,6 +221,65 @@ export function resetAllDataToDemo(): void {
   saveAllLDLogs(initialLDs);
 }
 
+// Backup & Snapshot functionality for data protection
+export function backupAllDataToLocalStorage(): void {
+  try {
+    const backupObj = {
+      timestamp: new Date().toISOString(),
+      staff: loadStaffList(),
+      attendance: loadAllAttendance(),
+      ldLogs: loadAllLDLogs(),
+      tables: loadTableList(),
+    };
+    localStorage.setItem('lounge_auto_backup_v1', JSON.stringify(backupObj));
+  } catch (err) {
+    console.error('Failed to create auto backup:', err);
+  }
+}
+
+// Export complete data to JSON file
+export function exportDatabaseJSON(): void {
+  const data = {
+    version: '1.0',
+    exportedAt: new Date().toISOString(),
+    staff: loadStaffList(),
+    attendance: loadAllAttendance(),
+    ldLogs: loadAllLDLogs(),
+    tables: loadTableList(),
+  };
+  
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `Lounge_Database_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+// Import complete data from JSON string
+export function importDatabaseJSON(jsonString: string): boolean {
+  try {
+    const parsed = JSON.parse(jsonString);
+    if (!parsed || typeof parsed !== 'object') return false;
+
+    // Create a safety backup of existing data first
+    backupAllDataToLocalStorage();
+
+    if (Array.isArray(parsed.staff)) saveStaffList(parsed.staff);
+    if (Array.isArray(parsed.attendance)) saveAllAttendance(parsed.attendance);
+    if (Array.isArray(parsed.ldLogs)) saveAllLDLogs(parsed.ldLogs);
+    if (Array.isArray(parsed.tables)) saveTableList(parsed.tables);
+
+    return true;
+  } catch (err) {
+    console.error('Failed to import database JSON:', err);
+    return false;
+  }
+}
+
 // CSV Export Generator with UTF-8 BOM
 export function downloadDailyReportCSV(dateStr: string) {
   const staffList = loadStaffList();
