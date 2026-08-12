@@ -139,8 +139,10 @@ export default function App() {
     }
   };
 
-  // Computed total stats for today
-  const totalWorkingStaff = attendanceRecords.filter((r) => !r.isAbsent).length;
+  // Computed total stats for today (On Duty: staff who have actually checked in and are not absent/off/suspended)
+  const totalWorkingStaff = attendanceRecords.filter(
+    (r) => Boolean(r.checkInTime) && !r.isAbsent && !r.isDayOff && !r.isSuspended
+  ).length;
   const totalLDToday = ldLogs.reduce((sum, log) => sum + log.amount, 0);
 
   return (

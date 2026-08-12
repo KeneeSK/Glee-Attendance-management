@@ -25,13 +25,16 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
   // Master Table List (Persisted in localStorage)
   const [masterTables, setMasterTables] = useState<string[]>(() => loadTableList());
 
-  // Initialize active table cards from existing logs or default master tables
-  const existingTablesInLogs: string[] = Array.from(new Set(ldLogs.map((l) => l.tableNo)));
-  const initialActiveTables = existingTablesInLogs.length > 0 
-    ? Array.from(new Set([...existingTablesInLogs, ...masterTables.slice(0, 4)]))
-    : masterTables.slice(0, 4);
+  // Re-sync master tables when data refreshes
+  React.useEffect(() => {
+    const currentStored = loadTableList();
+    setMasterTables(currentStored);
+    setActiveTables((prev) => prev.filter((t) => currentStored.includes(t)));
+  }, [ldLogs]);
 
-  const [activeTables, setActiveTables] = useState<string[]>(initialActiveTables);
+  // Start with clean initial view (no tables open by default)
+  const existingTablesInLogs: string[] = Array.from(new Set(ldLogs.map((l) => l.tableNo)));
+  const [activeTables, setActiveTables] = useState<string[]>([]);
   const [selectedStaffForTable, setSelectedStaffForTable] = useState<Record<string, string>>(() => {
     const map: Record<string, string> = {};
     existingTablesInLogs.forEach((t) => {
@@ -46,13 +49,6 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
   const [newTableName, setNewTableName] = useState('');
   const [pendingLD, setPendingLD] = useState<{tableNo: string, staffId: string, amount: number, staffName: string} | null>(null);
 
-  // Mobile Fast Entry State
-  const [mobileSelectedTable, setMobileSelectedTable] = useState<string>(
-    () => masterTables[0] || 'T-1'
-  );
-  const [mobileSelectedStaffId, setMobileSelectedStaffId] = useState<string>(
-    () => activeStaffList[0]?.id || ''
-  );
   const [toastNotification, setToastNotification] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -236,130 +232,6 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
         </div>
       )}
 
-      {/* Mobile Smartphone Quick Entry Bar */}
-      <div className="lounge-card rounded-2xl p-4 sm:p-5 border-2 border-purple-500/50 shadow-2xl bg-gradient-to-br from-[#121626] to-[#181d33] space-y-3.5">
-        <div className="flex items-center justify-between border-b border-purple-900/40 pb-2.5">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-purple-600/30 text-purple-300 border border-purple-500/40">
-              <Wine className="w-5 h-5 text-cyan-300" />
-            </div>
-            <div>
-              <h2 className="text-sm sm:text-base font-black text-white tracking-wide flex items-center gap-2">
-                <span>📱 Mobile Smartphone Express Counter</span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800">
-                  Fast 1-Tap Log
-                </span>
-              </h2>
-              <p className="text-[11px] text-slate-400">
-                Tap table &amp; staff below to log LD instantly on mobile phone
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* 1. Quick Table Selection Chips */}
-        <div className="space-y-1.5">
-          <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block">
-            1. Select Table:
-          </label>
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 no-scrollbar">
-            {masterTables.map((tName) => {
-              const isSelected = mobileSelectedTable === tName;
-              return (
-                <button
-                  key={tName}
-                  onClick={() => setMobileSelectedTable(tName)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 min-w-[56px] text-center ${
-                    isSelected
-                      ? 'bg-cyan-400 text-slate-950 shadow-lg shadow-cyan-500/40 font-black scale-105 ring-2 ring-cyan-200'
-                      : 'bg-slate-900/90 text-slate-300 border border-slate-700/80 hover:bg-slate-800'
-                  }`}
-                >
-                  {tName}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 2. Select Staff */}
-        <div className="space-y-1.5">
-          <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider block">
-            2. Select Staff:
-          </label>
-          <select
-            value={mobileSelectedStaffId || activeStaffList[0]?.id || ''}
-            onChange={(e) => setMobileSelectedStaffId(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-100 font-bold focus:outline-none focus:border-purple-500 h-11"
-          >
-            {activeStaffList.map((staff) => (
-              <option key={staff.id} value={staff.id}>
-                {staff.name} ({staff.role})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* 3. Fast Tap Action Buttons (Big Touch Targets - 48px height) */}
-        <div className="grid grid-cols-4 gap-2 pt-1">
-          <button
-            onClick={() =>
-              handleDirectAddLD(
-                mobileSelectedTable,
-                mobileSelectedStaffId || activeStaffList[0]?.id,
-                -1
-              )
-            }
-            className="h-12 bg-rose-950/90 hover:bg-rose-900 text-rose-200 border border-rose-800 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1 active:scale-95 transition-all shadow-md"
-          >
-            <Minus className="w-4 h-4" />
-            <span>-1</span>
-          </button>
-
-          <button
-            onClick={() =>
-              handleDirectAddLD(
-                mobileSelectedTable,
-                mobileSelectedStaffId || activeStaffList[0]?.id,
-                1
-              )
-            }
-            className="h-12 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white border border-purple-400/50 rounded-xl font-black text-sm sm:text-base flex items-center justify-center gap-1 active:scale-95 transition-all shadow-lg shadow-purple-900/50"
-          >
-            <Plus className="w-4 h-4" />
-            <span>+1</span>
-          </button>
-
-          <button
-            onClick={() =>
-              handleDirectAddLD(
-                mobileSelectedTable,
-                mobileSelectedStaffId || activeStaffList[0]?.id,
-                2
-              )
-            }
-            className="h-12 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white border border-cyan-400/50 rounded-xl font-black text-sm sm:text-base flex items-center justify-center gap-1 active:scale-95 transition-all shadow-lg shadow-cyan-900/50"
-          >
-            <Plus className="w-4 h-4" />
-            <span>+2</span>
-          </button>
-
-          <button
-            onClick={() =>
-              handleDirectAddLD(
-                mobileSelectedTable,
-                mobileSelectedStaffId || activeStaffList[0]?.id,
-                3
-              )
-            }
-            className="h-12 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white border border-amber-400/50 rounded-xl font-black text-sm sm:text-base flex items-center justify-center gap-1 active:scale-95 transition-all shadow-lg shadow-amber-900/50"
-          >
-            <Plus className="w-4 h-4" />
-            <span>+3</span>
-          </button>
-        </div>
-      </div>
-
       {/* Top Controls: Table Preset Picker & Quick Add Table */}
       <div className="lounge-card rounded-xl p-4 space-y-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -426,19 +298,28 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
       </div>
 
       {/* Grid Layout: Active Table Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {activeTables.map((tableNo) => {
-          const { totalLD, staffBreakdown } = getTableStaffSummary(tableNo);
-          const currentAssignedStaffId =
-            selectedStaffForTable[tableNo] || (activeStaffList[0]?.id ?? '');
-          const isCardEditing = cardEditingTable === tableNo;
+      {activeTables.length === 0 ? (
+        <div className="lounge-card rounded-2xl p-8 text-center space-y-3 border border-slate-800/80 my-2">
+          <Wine className="w-10 h-10 text-purple-400/60 mx-auto" />
+          <h3 className="text-sm font-bold text-slate-200">Track Table LDs</h3>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            Click any table button above (e.g. <span className="text-purple-300 font-semibold">+ T-1</span>) to open a live counter card when needed.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {activeTables.map((tableNo) => {
+            const { totalLD, staffBreakdown } = getTableStaffSummary(tableNo);
+            const currentAssignedStaffId =
+              selectedStaffForTable[tableNo] || (activeStaffList[0]?.id ?? '');
+            const isCardEditing = cardEditingTable === tableNo;
 
-          return (
-            <div
-              key={tableNo}
-              className="postit-card rounded-xl p-4 shadow-xl border border-slate-800 flex flex-col justify-between space-y-4 transition-transform hover:-translate-y-0.5"
-            >
-              {/* Table Card Header */}
+            return (
+              <div
+                key={tableNo}
+                className="postit-card rounded-xl p-4 shadow-xl border border-slate-800 flex flex-col justify-between space-y-4 transition-transform hover:-translate-y-0.5"
+              >
+                {/* Table Card Header */}
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1">
                   {isCardEditing ? (
@@ -589,6 +470,7 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
           );
         })}
       </div>
+      )}
 
       {/* Live Recent Activity Log Timeline */}
       <div className="lounge-card rounded-xl p-4 border border-slate-800">

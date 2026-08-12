@@ -28,7 +28,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
   const absentCount = attendanceRecords.filter((r) => r.isAbsent).length;
   const dayOffCount = attendanceRecords.filter((r) => r.isDayOff).length;
   const suspendedCount = attendanceRecords.filter((r) => r.isSuspended).length;
-  const presentCount = attendanceRecords.filter((r) => !r.isAbsent && !r.isDayOff && !r.isSuspended && !r.isLate).length;
+  const presentCount = attendanceRecords.filter((r) => Boolean(r.checkInTime) && !r.isAbsent && !r.isDayOff && !r.isSuspended && !r.isLate).length;
 
   const filteredRecords = attendanceRecords.filter((rec) => {
     const matchesSearch =
@@ -37,7 +37,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
 
     if (!matchesSearch) return false;
 
-    if (statusFilter === 'present') return !rec.isAbsent && !rec.isDayOff && !rec.isSuspended && !rec.isLate;
+    if (statusFilter === 'present') return Boolean(rec.checkInTime) && !rec.isAbsent && !rec.isDayOff && !rec.isSuspended && !rec.isLate;
     if (statusFilter === 'late') return rec.isLate && !rec.isAbsent && !rec.isDayOff && !rec.isSuspended;
     if (statusFilter === 'absent') return rec.isAbsent;
     if (statusFilter === 'dayoff') return rec.isDayOff;

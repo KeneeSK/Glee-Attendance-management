@@ -96,7 +96,13 @@ export function loadStaffList(): Staff[] {
       saveStaffList(DEFAULT_STAFF_LIST);
       return DEFAULT_STAFF_LIST;
     }
-    return JSON.parse(data);
+    const parsed: Staff[] = JSON.parse(data);
+    // Auto-refresh if local storage still has old default staff (e.g., ABBY or old IDs)
+    if (!Array.isArray(parsed) || parsed.length === 0 || parsed.some((s) => s.id?.startsWith('st-') || (s.id === 'STF-01' && s.name === 'ABBY'))) {
+      saveStaffList(DEFAULT_STAFF_LIST);
+      return DEFAULT_STAFF_LIST;
+    }
+    return parsed;
   } catch (err) {
     console.error('Failed to load staff list from localStorage:', err);
     return DEFAULT_STAFF_LIST;
@@ -148,32 +154,60 @@ export function saveAllAttendance(records: AttendanceRecord[]): void {
 
 export function getAttendanceForDate(dateStr: string): AttendanceRecord[] {
   const all = loadAllAttendance();
-  const filtered = all.filter((r) => r.date === dateStr);
-  
-  // If no attendance records exist for this date yet, initialize from active staff list
-  if (filtered.length === 0) {
-    const staffList = loadStaffList().filter((s) => s.active);
-    const newRecords: AttendanceRecord[] = staffList.map((staff) => ({
-      id: `att_${dateStr}_${staff.id}`,
-      date: dateStr,
-      staffId: staff.id,
-      staffName: staff.name,
-      schedule: staff.defaultSchedule,
-      checkInTime: '',
-      checkOutTime: '',
-      isLate: false,
-      isAbsent: false,
-      isDayOff: false,
-      isSuspended: false,
-      note: '',
-      updatedAt: new Date().toISOString(),
-    }));
-    
-    saveAllAttendance([...all, ...newRecords]);
-    return newRecords;
+  const dateRecords = all.filter((r) => r.date === dateStr);
+  const activeStaff = loadStaffList().filter((s) => s.active);
+  const activeStaffMap = new Map<string, Staff>(activeStaff.map((s) => [s.id, s]));
+
+  let updated = false;
+  const resultMap = new Map<string, AttendanceRecord>();
+
+  // Filter existing records for this date to only keep active staff members
+  dateRecords.forEach((rec) => {
+    if (activeStaffMap.has(rec.staffId)) {
+      resultMap.set(rec.staffId, rec);
+    }
+  });
+
+  // Ensure every active staff member has a valid record for this date
+  activeStaff.forEach((staff) => {
+    if (!resultMap.has(staff.id)) {
+      const newRec: AttendanceRecord = {
+        id: `att_${dateStr}_${staff.id}`,
+        date: dateStr,
+        staffId: staff.id,
+        staffName: staff.name,
+        schedule: staff.defaultSchedule,
+        checkInTime: '',
+        checkOutTime: '',
+        isLate: false,
+        isAbsent: false,
+        isDayOff: false,
+        isSuspended: false,
+        note: '',
+        updatedAt: new Date().toISOString(),
+      };
+      resultMap.set(staff.id, newRec);
+      updated = true;
+    } else {
+      const existing = resultMap.get(staff.id)!;
+      if (existing.staffName !== staff.name || existing.schedule !== staff.defaultSchedule) {
+        existing.staffName = staff.name;
+        existing.schedule = staff.defaultSchedule;
+        updated = true;
+      }
+    }
+  });
+
+  // Clean up 'all' to replace records for dateStr with only active staff records
+  const otherDatesRecords = all.filter((r) => r.date !== dateStr);
+  const currentActiveDateRecords = activeStaff.map((staff) => resultMap.get(staff.id)!);
+  const cleanedAll = [...otherDatesRecords, ...currentActiveDateRecords];
+
+  if (updated || cleanedAll.length !== all.length) {
+    saveAllAttendance(cleanedAll);
   }
-  
-  return filtered;
+
+  return currentActiveDateRecords;
 }
 
 export function updateAttendanceRecord(updatedRecord: AttendanceRecord): void {
@@ -239,7 +273,7 @@ function mergeClientAndServerById<T extends { id: string }>(localArr: T[], serve
   return Array.from(map.values());
 }
 
-// Fetch database from Express server API and hydrate client state with smart merge
+// Fetch database from Express server API and hydrate client state
 export async function fetchServerDatabase(): Promise<boolean> {
   try {
     const res = await fetch('/api/db');
@@ -248,44 +282,17 @@ export async function fetchServerDatabase(): Promise<boolean> {
     if (json.success && json.data) {
       const { staff: serverStaff, tables: serverTables, attendance: serverAttendance, ldLogs: serverLdLogs } = json.data;
 
-      // Load current local data
-      const localStaff = loadStaffList();
-      const localTables = loadTableList();
-      const localAttendance = loadAllAttendance();
-      const localLdLogs = loadAllLDLogs();
-
-      // Smart Merge Staff
-      const mergedStaff = mergeClientAndServerById(localStaff, Array.isArray(serverStaff) ? serverStaff : []);
-      localStorage.setItem(KEYS.STAFF, JSON.stringify(mergedStaff));
-
-      // Smart Merge Tables
-      const tablesSet = new Set<string>([...localTables, ...(Array.isArray(serverTables) ? serverTables : [])]);
-      const mergedTables = Array.from(tablesSet);
-      localStorage.setItem(KEYS.TABLES, JSON.stringify(mergedTables));
-
-      // Smart Merge Attendance
-      const mergedAttendance = mergeClientAndServerById(localAttendance, Array.isArray(serverAttendance) ? serverAttendance : []);
-      localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(mergedAttendance));
-
-      // Smart Merge LD Logs
-      const mergedLdLogs = mergeClientAndServerById(localLdLogs, Array.isArray(serverLdLogs) ? serverLdLogs : []);
-      localStorage.setItem(KEYS.LD_LOGS, JSON.stringify(mergedLdLogs));
-
-      // Push merged back to server if local had items server didn't have
-      if (
-        (localAttendance.length > 0 && (!serverAttendance || serverAttendance.length < localAttendance.length)) ||
-        (localLdLogs.length > 0 && (!serverLdLogs || serverLdLogs.length < localLdLogs.length))
-      ) {
-        fetch('/api/db/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            staff: mergedStaff,
-            tables: mergedTables,
-            attendance: mergedAttendance,
-            ldLogs: mergedLdLogs,
-          }),
-        }).catch(() => {});
+      if (Array.isArray(serverStaff)) {
+        localStorage.setItem(KEYS.STAFF, JSON.stringify(serverStaff));
+      }
+      if (Array.isArray(serverTables)) {
+        localStorage.setItem(KEYS.TABLES, JSON.stringify(serverTables));
+      }
+      if (Array.isArray(serverAttendance)) {
+        localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(serverAttendance));
+      }
+      if (Array.isArray(serverLdLogs)) {
+        localStorage.setItem(KEYS.LD_LOGS, JSON.stringify(serverLdLogs));
       }
 
       return true;

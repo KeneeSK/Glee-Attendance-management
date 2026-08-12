@@ -20,21 +20,27 @@ if (!fs.existsSync(DATA_DIR)) {
 
 // Initial default data if file does not exist
 const INITIAL_STAFF = [
-  { id: 'st-1', name: 'ABBY', role: 'Staff', schedule: '18:00 - 02:00', active: true },
-  { id: 'st-2', name: 'BELLA', role: 'Staff', schedule: '18:00 - 02:00', active: true },
-  { id: 'st-3', name: 'CHLOE', role: 'Staff', schedule: '18:00 - 02:00', active: true },
-  { id: 'st-4', name: 'DAISY', role: 'Staff', schedule: '18:00 - 02:00', active: true },
-  { id: 'st-5', name: 'EMMA', role: 'Staff', schedule: '18:00 - 02:00', active: true },
-  { id: 'st-6', name: 'FIONA', role: 'Staff', schedule: '18:00 - 02:00', active: true },
-  { id: 'st-7', name: 'GRACE', role: 'Staff', schedule: '18:00 - 02:00', active: true },
-  { id: 'st-8', name: 'HANNAH', role: 'Staff', schedule: '18:00 - 02:00', active: true },
-  { id: 'st-9', name: 'IRIS', role: 'Staff', schedule: '18:00 - 02:00', active: true },
-  { id: 'st-10', name: 'JENNY', role: 'Staff', schedule: '18:00 - 02:00', active: true },
-  { id: 'st-11', name: 'KATE', role: 'Staff', schedule: '18:00 - 02:00', active: true },
-  { id: 'st-12', name: 'LISA', role: 'Staff', schedule: '18:00 - 02:00', active: true },
-  { id: 'st-13', name: 'MIA', role: 'Staff', schedule: '18:00 - 02:00', active: true },
-  { id: 'st-14', name: 'NINA', role: 'Staff', schedule: '18:00 - 02:00', active: true },
-  { id: 'st-15', name: 'OLIVIA', role: 'Staff', schedule: '18:00 - 02:00', active: true },
+  { id: 'STF-01', name: 'SIR KENEE', role: 'Chief, Daily Operations', defaultSchedule: '6:00 PM - 4:00 AM', active: true },
+  { id: 'STF-02', name: 'RICHAEL', role: 'Chief Financial & Logistic Operations', defaultSchedule: '5:00 PM - 4:00 AM', active: true },
+  { id: 'STF-03', name: 'MARIA', role: 'Head Wait Staff', defaultSchedule: '6:00 PM - 4:00 AM', active: true },
+  { id: 'STF-04', name: 'RICHARD', role: 'DJ / Sound Technician', defaultSchedule: '6:00 PM - 3:00 AM', active: true },
+  { id: 'STF-05', name: 'DJ LYSKEE', role: 'DJ / Sound Technician', defaultSchedule: '6:00 PM - 3:00 AM', active: true },
+  { id: 'STF-06', name: 'RYAN', role: 'Head Chef', defaultSchedule: '5:00 PM - 2:00 AM', active: true },
+  { id: 'STF-07', name: 'JOLANDS', role: 'Kitchen Staff', defaultSchedule: '6:00 PM - 3:00 AM', active: true },
+  { id: 'STF-08', name: 'JR', role: 'Kitchen Staff', defaultSchedule: '7:00 PM - 4:00 AM', active: true },
+  { id: 'STF-09', name: 'CAMILLE', role: 'Cashier', defaultSchedule: '7:00 PM - 4:00 AM', active: true },
+  { id: 'STF-10', name: 'NESDY', role: 'Wait Staff', defaultSchedule: '7:00 PM - 4:00 AM', active: true },
+  { id: 'STF-11', name: 'JHOANNA', role: 'Wait Staff', defaultSchedule: '7:00 PM - 4:00 AM', active: true },
+  { id: 'STF-12', name: 'MICA', role: 'Wait Staff', defaultSchedule: '6:00 PM - 4:00 AM', active: true },
+  { id: 'STF-13', name: 'MARIVIC', role: 'Wait Staff', defaultSchedule: '4:30 PM - 1:30 AM', active: true },
+  { id: 'STF-14', name: 'PRECY', role: 'Wait Staff', defaultSchedule: '4:30 PM - 1:30 AM', active: true },
+  { id: 'STF-15', name: 'NORA', role: 'Wait Staff', defaultSchedule: '7:00 PM - 4:00 AM', active: true },
+  { id: 'STF-16', name: 'YHENG', role: 'Wait Staff', defaultSchedule: '4:30 PM - 1:30 AM', active: true },
+  { id: 'STF-17', name: 'KATH', role: 'Wait Staff', defaultSchedule: '4:30 PM - 1:30 AM', active: true },
+  { id: 'STF-18', name: 'GILLI', role: 'Wait Staff', defaultSchedule: '7:00 PM - 4:00 AM', active: true },
+  { id: 'STF-19', name: 'AGA', role: 'Wait Staff', defaultSchedule: '7:00 PM - 4:00 AM', active: true },
+  { id: 'STF-20', name: 'JOHN', role: 'Utility', defaultSchedule: '4:30 PM - 4:00 AM', active: true },
+  { id: 'STF-21', name: 'JONATHAN', role: 'Doorman', defaultSchedule: '4:30 PM - 4:00 AM', active: true },
 ];
 
 const INITIAL_TABLES = [
@@ -55,7 +61,15 @@ function readDB() {
   }
   try {
     const raw = fs.readFileSync(DB_FILE, 'utf-8');
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    
+    // Auto-update staff if it holds old default data or is missing new roles
+    if (!parsed.staff || parsed.staff.length === 0 || parsed.staff.some((s: any) => s.id?.startsWith('st-') || s.name === 'ABBY')) {
+      parsed.staff = INITIAL_STAFF;
+      writeDB(parsed);
+    }
+    
+    return parsed;
   } catch (err) {
     console.error('Error reading DB file:', err);
     return {
@@ -126,10 +140,10 @@ app.post('/api/db/sync', (req, res) => {
   const currentDB = readDB();
   
   const updatedDB = {
-    staff: Array.isArray(staff) && staff.length > 0 ? mergeArraysById(currentDB.staff, staff) : currentDB.staff,
-    tables: Array.isArray(tables) && tables.length > 0 ? mergeTables(currentDB.tables, tables) : currentDB.tables,
-    attendance: Array.isArray(attendance) && attendance.length > 0 ? mergeArraysById(currentDB.attendance, attendance) : currentDB.attendance,
-    ldLogs: Array.isArray(ldLogs) && ldLogs.length > 0 ? mergeArraysById(currentDB.ldLogs, ldLogs) : currentDB.ldLogs,
+    staff: Array.isArray(staff) ? staff : currentDB.staff,
+    tables: Array.isArray(tables) ? tables : currentDB.tables,
+    attendance: Array.isArray(attendance) ? attendance : currentDB.attendance,
+    ldLogs: Array.isArray(ldLogs) ? ldLogs : currentDB.ldLogs,
     updatedAt: new Date().toISOString(),
   };
 
