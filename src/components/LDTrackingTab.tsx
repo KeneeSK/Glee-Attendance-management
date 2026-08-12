@@ -303,9 +303,6 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
                       >
                         <Edit3 className="w-3.5 h-3.5" />
                       </button>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-950/80 text-cyan-300 border border-cyan-800/60">
-                        LIVE TABLE
-                      </span>
                     </div>
                   )}
                   <p className="text-[11px] text-slate-400 mt-0.5">
@@ -314,13 +311,6 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
                 </div>
 
                 <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => setDeletingTableConfirm(tableNo)}
-                    className="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-slate-800/80 transition-colors"
-                    title="Delete table permanently"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
                   <button
                     onClick={() => handleRemoveTableCardFromView(tableNo)}
                     className="text-slate-500 hover:text-slate-300 p-1 rounded hover:bg-slate-800/80 transition-colors"
