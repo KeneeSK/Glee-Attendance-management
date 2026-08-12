@@ -79,6 +79,39 @@ function writeDB(data: any) {
   }
 }
 
+// Helper functions for smart data merging to prevent data loss
+function mergeArraysById(existingArr: any[] = [], incomingArr: any[] = []): any[] {
+  const map = new Map<string, any>();
+  if (Array.isArray(existingArr)) {
+    for (const item of existingArr) {
+      if (item && item.id) {
+        map.set(item.id, item);
+      }
+    }
+  }
+  if (Array.isArray(incomingArr)) {
+    for (const item of incomingArr) {
+      if (item && item.id) {
+        const existing = map.get(item.id);
+        if (!existing) {
+          map.set(item.id, item);
+        } else {
+          // Merge properties, preferring non-empty values
+          map.set(item.id, { ...existing, ...item });
+        }
+      }
+    }
+  }
+  return Array.from(map.values());
+}
+
+function mergeTables(existingTables: string[] = [], incomingTables: string[] = []): string[] {
+  const set = new Set<string>();
+  if (Array.isArray(existingTables)) existingTables.forEach((t) => t && set.add(t));
+  if (Array.isArray(incomingTables)) incomingTables.forEach((t) => t && set.add(t));
+  return Array.from(set);
+}
+
 // ==================== SERVER API ROUTES ====================
 
 // Get full server database
@@ -87,16 +120,16 @@ app.get('/api/db', (req, res) => {
   res.json({ success: true, data: db });
 });
 
-// Full Sync / Save Database
+// Full Smart Sync / Save Database
 app.post('/api/db/sync', (req, res) => {
   const { staff, tables, attendance, ldLogs } = req.body;
   const currentDB = readDB();
   
   const updatedDB = {
-    staff: staff || currentDB.staff,
-    tables: tables || currentDB.tables,
-    attendance: attendance || currentDB.attendance,
-    ldLogs: ldLogs || currentDB.ldLogs,
+    staff: Array.isArray(staff) && staff.length > 0 ? mergeArraysById(currentDB.staff, staff) : currentDB.staff,
+    tables: Array.isArray(tables) && tables.length > 0 ? mergeTables(currentDB.tables, tables) : currentDB.tables,
+    attendance: Array.isArray(attendance) && attendance.length > 0 ? mergeArraysById(currentDB.attendance, attendance) : currentDB.attendance,
+    ldLogs: Array.isArray(ldLogs) && ldLogs.length > 0 ? mergeArraysById(currentDB.ldLogs, ldLogs) : currentDB.ldLogs,
     updatedAt: new Date().toISOString(),
   };
 

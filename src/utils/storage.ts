@@ -217,26 +217,77 @@ export function saveAllLDLogs(logs: LDLogEntry[]): void {
   }
 }
 
-// Fetch database from Express server API and hydrate client state
+function mergeClientAndServerById<T extends { id: string }>(localArr: T[], serverArr: T[]): T[] {
+  const map = new Map<string, T>();
+  if (Array.isArray(localArr)) {
+    for (const item of localArr) {
+      if (item && item.id) map.set(item.id, item);
+    }
+  }
+  if (Array.isArray(serverArr)) {
+    for (const item of serverArr) {
+      if (item && item.id) {
+        const existing = map.get(item.id);
+        if (!existing) {
+          map.set(item.id, item);
+        } else {
+          map.set(item.id, { ...existing, ...item });
+        }
+      }
+    }
+  }
+  return Array.from(map.values());
+}
+
+// Fetch database from Express server API and hydrate client state with smart merge
 export async function fetchServerDatabase(): Promise<boolean> {
   try {
     const res = await fetch('/api/db');
     if (!res.ok) return false;
     const json = await res.json();
     if (json.success && json.data) {
-      const { staff, tables, attendance, ldLogs } = json.data;
-      if (Array.isArray(staff) && staff.length > 0) {
-        localStorage.setItem(KEYS.STAFF, JSON.stringify(staff));
+      const { staff: serverStaff, tables: serverTables, attendance: serverAttendance, ldLogs: serverLdLogs } = json.data;
+
+      // Load current local data
+      const localStaff = loadStaffList();
+      const localTables = loadTableList();
+      const localAttendance = loadAllAttendance();
+      const localLdLogs = loadAllLDLogs();
+
+      // Smart Merge Staff
+      const mergedStaff = mergeClientAndServerById(localStaff, Array.isArray(serverStaff) ? serverStaff : []);
+      localStorage.setItem(KEYS.STAFF, JSON.stringify(mergedStaff));
+
+      // Smart Merge Tables
+      const tablesSet = new Set<string>([...localTables, ...(Array.isArray(serverTables) ? serverTables : [])]);
+      const mergedTables = Array.from(tablesSet);
+      localStorage.setItem(KEYS.TABLES, JSON.stringify(mergedTables));
+
+      // Smart Merge Attendance
+      const mergedAttendance = mergeClientAndServerById(localAttendance, Array.isArray(serverAttendance) ? serverAttendance : []);
+      localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(mergedAttendance));
+
+      // Smart Merge LD Logs
+      const mergedLdLogs = mergeClientAndServerById(localLdLogs, Array.isArray(serverLdLogs) ? serverLdLogs : []);
+      localStorage.setItem(KEYS.LD_LOGS, JSON.stringify(mergedLdLogs));
+
+      // Push merged back to server if local had items server didn't have
+      if (
+        (localAttendance.length > 0 && (!serverAttendance || serverAttendance.length < localAttendance.length)) ||
+        (localLdLogs.length > 0 && (!serverLdLogs || serverLdLogs.length < localLdLogs.length))
+      ) {
+        fetch('/api/db/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            staff: mergedStaff,
+            tables: mergedTables,
+            attendance: mergedAttendance,
+            ldLogs: mergedLdLogs,
+          }),
+        }).catch(() => {});
       }
-      if (Array.isArray(tables) && tables.length > 0) {
-        localStorage.setItem(KEYS.TABLES, JSON.stringify(tables));
-      }
-      if (Array.isArray(attendance)) {
-        localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(attendance));
-      }
-      if (Array.isArray(ldLogs)) {
-        localStorage.setItem(KEYS.LD_LOGS, JSON.stringify(ldLogs));
-      }
+
       return true;
     }
   } catch (err) {

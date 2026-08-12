@@ -83,7 +83,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </div>
               <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-200 via-purple-300 to-cyan-200 bg-clip-text text-transparent">
-                Lounge Attendance & LD Tracking
+                Glee Angels Attendance & LD Tracking
               </h1>
             </div>
           </div>
