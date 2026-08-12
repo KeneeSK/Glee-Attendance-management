@@ -1,0 +1,6 @@
+{
+  "name": "Glee Angels Music Lounge",
+  "description": "Digital attendance roster and table-by-table Ladies Drink (LD) tracking system for Glee Angels Music Lounge.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
