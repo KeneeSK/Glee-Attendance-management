@@ -13,6 +13,7 @@ import {
   exportDatabaseJSON,
   importDatabaseJSON,
   backupAllDataToLocalStorage,
+  fetchServerDatabase,
 } from './utils/storage';
 import { getTodayDateString } from './utils/initialData';
 import { Header } from './components/Header';
@@ -53,7 +54,20 @@ export default function App() {
 
   useEffect(() => {
     if (isAuthenticated) {
+      // First load from local, then sync with server DB
       refreshData();
+      fetchServerDatabase().then(() => {
+        refreshData();
+      });
+
+      // Poll server DB every 5 seconds for real-time multi-device sync
+      const syncTimer = setInterval(() => {
+        fetchServerDatabase().then(() => {
+          refreshData();
+        });
+      }, 5000);
+
+      return () => clearInterval(syncTimer);
     }
   }, [refreshData, isAuthenticated]);
 

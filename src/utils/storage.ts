@@ -25,6 +25,12 @@ export function loadTableList(): string[] {
 export function saveTableList(tables: string[]): void {
   try {
     localStorage.setItem(KEYS.TABLES, JSON.stringify(tables));
+    // Asynchronously push to server DB
+    fetch('/api/db/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tables }),
+    }).catch((err) => console.warn('Server DB sync warning:', err));
   } catch (err) {
     console.error('Failed to save table list:', err);
   }
@@ -100,6 +106,11 @@ export function loadStaffList(): Staff[] {
 export function saveStaffList(staffList: Staff[]): void {
   try {
     localStorage.setItem(KEYS.STAFF, JSON.stringify(staffList));
+    fetch('/api/db/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ staff: staffList }),
+    }).catch((err) => console.warn('Server DB sync warning:', err));
   } catch (err) {
     console.error('Failed to save staff list:', err);
   }
@@ -125,6 +136,11 @@ export function loadAllAttendance(): AttendanceRecord[] {
 export function saveAllAttendance(records: AttendanceRecord[]): void {
   try {
     localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(records));
+    fetch('/api/db/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ attendance: records }),
+    }).catch((err) => console.warn('Server DB sync warning:', err));
   } catch (err) {
     console.error('Failed to save attendance:', err);
   }
@@ -191,9 +207,42 @@ export function loadAllLDLogs(): LDLogEntry[] {
 export function saveAllLDLogs(logs: LDLogEntry[]): void {
   try {
     localStorage.setItem(KEYS.LD_LOGS, JSON.stringify(logs));
+    fetch('/api/db/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ldLogs: logs }),
+    }).catch((err) => console.warn('Server DB sync warning:', err));
   } catch (err) {
     console.error('Failed to save LD logs:', err);
   }
+}
+
+// Fetch database from Express server API and hydrate client state
+export async function fetchServerDatabase(): Promise<boolean> {
+  try {
+    const res = await fetch('/api/db');
+    if (!res.ok) return false;
+    const json = await res.json();
+    if (json.success && json.data) {
+      const { staff, tables, attendance, ldLogs } = json.data;
+      if (Array.isArray(staff) && staff.length > 0) {
+        localStorage.setItem(KEYS.STAFF, JSON.stringify(staff));
+      }
+      if (Array.isArray(tables) && tables.length > 0) {
+        localStorage.setItem(KEYS.TABLES, JSON.stringify(tables));
+      }
+      if (Array.isArray(attendance)) {
+        localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(attendance));
+      }
+      if (Array.isArray(ldLogs)) {
+        localStorage.setItem(KEYS.LD_LOGS, JSON.stringify(ldLogs));
+      }
+      return true;
+    }
+  } catch (err) {
+    console.warn('Could not fetch server database (running offline or standalone):', err);
+  }
+  return false;
 }
 
 export function getLDLogsForDate(dateStr: string): LDLogEntry[] {
