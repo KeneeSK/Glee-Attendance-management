@@ -1,4 +1,4 @@
-import { Staff, AttendanceRecord, LDLogEntry } from '../types';
+import { Staff, AttendanceRecord, LDLogEntry, AdminUser } from '../types';
 import { DEFAULT_STAFF_LIST, PRESET_TABLES, generateInitialAttendance, generateInitialLDLogs, getTodayDateString } from './initialData';
 
 const KEYS = {
@@ -6,7 +6,51 @@ const KEYS = {
   ATTENDANCE: 'lounge_attendance_v2',
   LD_LOGS: 'lounge_ld_logs_v2',
   TABLES: 'lounge_tables_v2',
+  ADMINS: 'lounge_admins_v2',
 };
+
+const DEFAULT_ADMIN: AdminUser = {
+  id: 'adm-01',
+  username: 'admin',
+  password: 'admin123',
+  name: 'Super Admin',
+  role: 'super',
+  permissions: {
+    canAccessAttendance: true,
+    canAccessLD: true,
+    canAccessReport: true,
+    canManageStaff: true,
+    canManageAdmins: true,
+  },
+  createdAt: new Date().toISOString(),
+};
+
+export function loadAdmins(): AdminUser[] {
+  try {
+    const data = localStorage.getItem(KEYS.ADMINS);
+    if (!data) {
+      saveAdmins([DEFAULT_ADMIN]);
+      return [DEFAULT_ADMIN];
+    }
+    return JSON.parse(data);
+  } catch (err) {
+    console.error('Failed to load admins:', err);
+    return [DEFAULT_ADMIN];
+  }
+}
+
+export function saveAdmins(admins: AdminUser[]): void {
+  try {
+    localStorage.setItem(KEYS.ADMINS, JSON.stringify(admins));
+    fetch('/api/db/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ admins }),
+    }).catch((err) => console.warn('Server DB sync warning:', err));
+  } catch (err) {
+    console.error('Failed to save admins:', err);
+  }
+}
 
 export function loadTableList(): string[] {
   try {
@@ -337,6 +381,7 @@ export function backupAllDataToLocalStorage(): void {
       attendance: loadAllAttendance(),
       ldLogs: loadAllLDLogs(),
       tables: loadTableList(),
+      admins: loadAdmins(),
     };
     localStorage.setItem('lounge_auto_backup_v1', JSON.stringify(backupObj));
   } catch (err) {
@@ -353,6 +398,7 @@ export function exportDatabaseJSON(): void {
     attendance: loadAllAttendance(),
     ldLogs: loadAllLDLogs(),
     tables: loadTableList(),
+    admins: loadAdmins(),
   };
   
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -379,6 +425,7 @@ export function importDatabaseJSON(jsonString: string): boolean {
     if (Array.isArray(parsed.attendance)) saveAllAttendance(parsed.attendance);
     if (Array.isArray(parsed.ldLogs)) saveAllLDLogs(parsed.ldLogs);
     if (Array.isArray(parsed.tables)) saveTableList(parsed.tables);
+    if (Array.isArray(parsed.admins)) saveAdmins(parsed.admins);
 
     return true;
   } catch (err) {

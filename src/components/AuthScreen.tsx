@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Lock, User, ShieldAlert, ArrowRight, Music, Sparkles } from 'lucide-react';
+import { loadAdmins } from '../utils/storage';
+import { AdminUser } from '../types';
 
 interface AuthScreenProps {
-  onUnlock: () => void;
+  onUnlock: (user: AdminUser) => void;
 }
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({ onUnlock }) => {
@@ -12,10 +14,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onUnlock }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === 'admin' && password === 'admin123') {
+    const admins = loadAdmins();
+    const foundAdmin = admins.find(a => a.username === username && a.password === password);
+    
+    if (foundAdmin) {
       setError(false);
       localStorage.setItem('lounge_admin_session_v1', 'true');
-      onUnlock();
+      localStorage.setItem('lounge_admin_current_user', JSON.stringify(foundAdmin));
+      onUnlock(foundAdmin);
     } else {
       setError(true);
       setPassword('');
@@ -97,16 +103,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onUnlock }) => {
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
-
-        {/* Demo Hint */}
-        <div className="bg-[#0b0e17] border border-slate-800 rounded-xl p-3 text-center text-xs text-slate-400 space-y-1">
-          <div className="flex items-center justify-center gap-1 text-purple-400 font-semibold">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Demo Administrator Credentials</span>
-          </div>
-          <p className="font-mono text-slate-200 text-xs tracking-wider">ID: <strong>admin</strong> | Pass: <strong>admin123</strong></p>
-        </div>
       </div>
     </div>
   );
 };
+

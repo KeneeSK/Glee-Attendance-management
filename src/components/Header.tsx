@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { TabType } from '../types';
+import { TabType, AdminUser } from '../types';
 import { Calendar, Clock, Users, Wine, BarChart3, UserCog, RotateCcw, Music, LogOut, Download, Upload, ShieldCheck } from 'lucide-react';
 
 interface HeaderProps {
@@ -10,10 +10,12 @@ interface HeaderProps {
   totalWorkingStaff: number;
   totalLDToday: number;
   onOpenStaffManager: () => void;
+  onOpenAdminManager: () => void;
   onResetDemoData: () => void;
   onLogout: () => void;
   onBackupData: () => void;
   onRestoreData: (jsonStr: string) => void;
+  currentUser: AdminUser;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -24,10 +26,12 @@ export const Header: React.FC<HeaderProps> = ({
   totalWorkingStaff,
   totalLDToday,
   onOpenStaffManager,
+  onOpenAdminManager,
   onResetDemoData,
   onLogout,
   onBackupData,
   onRestoreData,
+  currentUser,
 }) => {
   const [timeStr, setTimeStr] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -117,14 +121,27 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             {/* Management Buttons */}
-            <button
-              onClick={onOpenStaffManager}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-colors"
-              title="Manage Staff Roster"
-            >
-              <UserCog className="w-3.5 h-3.5 text-purple-400" />
-              <span className="hidden sm:inline">Roster</span>
-            </button>
+            {currentUser.permissions.canManageStaff && (
+              <button
+                onClick={onOpenStaffManager}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-colors"
+                title="Manage Staff Roster"
+              >
+                <UserCog className="w-3.5 h-3.5 text-purple-400" />
+                <span className="hidden sm:inline">Roster</span>
+              </button>
+            )}
+
+            {currentUser.permissions.canManageAdmins && (
+              <button
+                onClick={onOpenAdminManager}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-indigo-900/80 hover:bg-indigo-800 text-indigo-200 border border-indigo-700 rounded-lg transition-colors"
+                title="Manage Admins"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
+                <span className="hidden sm:inline">Admins</span>
+              </button>
+            )}
 
             {/* Backup JSON Button */}
             <button
@@ -137,28 +154,32 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             {/* Restore JSON Button */}
-            <label
-              className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium bg-purple-950/80 hover:bg-purple-900/90 text-purple-200 border border-purple-800/60 rounded-lg transition-colors cursor-pointer"
-              title="Restore Database from Backup (JSON)"
-            >
-              <Upload className="w-3.5 h-3.5 text-purple-400" />
-              <span className="hidden md:inline">Restore</span>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-            </label>
+            {currentUser.role === 'super' && (
+              <label
+                className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium bg-purple-950/80 hover:bg-purple-900/90 text-purple-200 border border-purple-800/60 rounded-lg transition-colors cursor-pointer"
+                title="Restore Database from Backup (JSON)"
+              >
+                <Upload className="w-3.5 h-3.5 text-purple-400" />
+                <span className="hidden md:inline">Restore</span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
+            )}
 
-            <button
-              onClick={onResetDemoData}
-              className="p-1.5 text-xs text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 border border-slate-800 hover:border-rose-900/40 rounded-lg transition-colors"
-              title="Reset Demo Data"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
+            {currentUser.role === 'super' && (
+              <button
+                onClick={onResetDemoData}
+                className="p-1.5 text-xs text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 border border-slate-800 hover:border-rose-900/40 rounded-lg transition-colors"
+                title="Reset Demo Data"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
+            )}
 
             {/* Logout / Lock Button */}
             <button
@@ -174,41 +195,47 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Navigation Tabs Bar */}
         <div className="flex space-x-1 sm:space-x-2 border-t border-slate-800/80 pt-1 pb-2 overflow-x-auto">
-          <button
-            onClick={() => setCurrentTab('attendance')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
-              currentTab === 'attendance'
-                ? 'bg-purple-600/30 text-purple-200 border border-purple-500/50 shadow-md shadow-purple-950/50 neon-border-purple'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-            }`}
-          >
-            <Users className={`w-4 h-4 ${currentTab === 'attendance' ? 'text-purple-400' : ''}`} />
-            <span>Attendance</span>
-          </button>
+          {currentUser.permissions.canAccessAttendance && (
+            <button
+              onClick={() => setCurrentTab('attendance')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
+                currentTab === 'attendance'
+                  ? 'bg-purple-600/30 text-purple-200 border border-purple-500/50 shadow-md shadow-purple-950/50 neon-border-purple'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <Users className={`w-4 h-4 ${currentTab === 'attendance' ? 'text-purple-400' : ''}`} />
+              <span>Attendance</span>
+            </button>
+          )}
 
-          <button
-            onClick={() => setCurrentTab('ld')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
-              currentTab === 'ld'
-                ? 'bg-cyan-600/30 text-cyan-200 border border-cyan-500/50 shadow-md shadow-cyan-950/50 neon-border-cyan'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-            }`}
-          >
-            <Wine className={`w-4 h-4 ${currentTab === 'ld' ? 'text-cyan-400' : ''}`} />
-            <span>LD Tracking</span>
-          </button>
+          {currentUser.permissions.canAccessLD && (
+            <button
+              onClick={() => setCurrentTab('ld')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
+                currentTab === 'ld'
+                  ? 'bg-cyan-600/30 text-cyan-200 border border-cyan-500/50 shadow-md shadow-cyan-950/50 neon-border-cyan'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <Wine className={`w-4 h-4 ${currentTab === 'ld' ? 'text-cyan-400' : ''}`} />
+              <span>LD Tracking</span>
+            </button>
+          )}
 
-          <button
-            onClick={() => setCurrentTab('report')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
-              currentTab === 'report'
-                ? 'bg-pink-600/30 text-pink-200 border border-pink-500/50 shadow-md shadow-pink-950/50 neon-border-pink'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-            }`}
-          >
-            <BarChart3 className={`w-4 h-4 ${currentTab === 'report' ? 'text-pink-400' : ''}`} />
-            <span>Daily Report</span>
-          </button>
+          {currentUser.permissions.canAccessReport && (
+            <button
+              onClick={() => setCurrentTab('report')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
+                currentTab === 'report'
+                  ? 'bg-pink-600/30 text-pink-200 border border-pink-500/50 shadow-md shadow-pink-950/50 neon-border-pink'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <BarChart3 className={`w-4 h-4 ${currentTab === 'report' ? 'text-pink-400' : ''}`} />
+              <span>Daily Report</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

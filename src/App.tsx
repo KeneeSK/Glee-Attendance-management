@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { AttendanceRecord, LDLogEntry, Staff, TabType } from './types';
+import { AttendanceRecord, LDLogEntry, Staff, TabType, AdminUser } from './types';
 import {
   loadStaffList,
   saveStaffList,
@@ -22,12 +22,19 @@ import { LDTrackingTab } from './components/LDTrackingTab';
 import { DailyReportTab } from './components/DailyReportTab';
 import { StaffManagerModal } from './components/StaffManagerModal';
 import { AuthScreen } from './components/AuthScreen';
+import { AdminManagerModal } from './components/AdminManagerModal';
 
 export default function App() {
   // Persist login state in localStorage
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
     () => localStorage.getItem('lounge_admin_session_v1') === 'true'
   );
+  
+  const [currentUser, setCurrentUser] = useState<AdminUser | null>(() => {
+    const stored = localStorage.getItem('lounge_admin_current_user');
+    return stored ? JSON.parse(stored) : null;
+  });
+
   const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
   const [currentTab, setCurrentTab] = useState<TabType>('attendance');
 
@@ -36,6 +43,16 @@ export default function App() {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [ldLogs, setLdLogs] = useState<LDLogEntry[]>([]);
   const [isStaffModalOpen, setIsStaffModalOpen] = useState<boolean>(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
+
+  // Auto-switch to first available tab based on permissions
+  useEffect(() => {
+    if (currentUser && currentUser.permissions) {
+      if (!currentUser.permissions.canAccessAttendance && currentTab === 'attendance') {
+        setCurrentTab(currentUser.permissions.canAccessLD ? 'ld' : (currentUser.permissions.canAccessReport ? 'report' : 'attendance'));
+      }
+    }
+  }, [currentUser, currentTab]);
 
   // Load Data on Initial Render or Date Change
   const refreshData = useCallback(() => {
@@ -73,7 +90,9 @@ export default function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('lounge_admin_session_v1');
+    localStorage.removeItem('lounge_admin_current_user');
     setIsAuthenticated(false);
+    setCurrentUser(null);
   };
 
   const handleBackupData = () => {
@@ -92,12 +111,14 @@ export default function App() {
     }
   };
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !currentUser) {
     return (
       <AuthScreen
-        onUnlock={() => {
+        onUnlock={(user) => {
           localStorage.setItem('lounge_admin_session_v1', 'true');
+          localStorage.setItem('lounge_admin_current_user', JSON.stringify(user));
           setIsAuthenticated(true);
+          setCurrentUser(user);
         }}
       />
     );
@@ -156,15 +177,17 @@ export default function App() {
         totalWorkingStaff={totalWorkingStaff}
         totalLDToday={totalLDToday}
         onOpenStaffManager={() => setIsStaffModalOpen(true)}
+        onOpenAdminManager={() => setIsAdminModalOpen(true)}
         onResetDemoData={handleResetDemoData}
         onLogout={handleLogout}
         onBackupData={handleBackupData}
         onRestoreData={handleRestoreData}
+        currentUser={currentUser}
       />
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {currentTab === 'attendance' && (
+        {currentTab === 'attendance' && currentUser.permissions.canAccessAttendance && (
           <AttendanceTab
             dateStr={selectedDate}
             attendanceRecords={attendanceRecords}
@@ -174,7 +197,7 @@ export default function App() {
           />
         )}
 
-        {currentTab === 'ld' && (
+        {currentTab === 'ld' && currentUser.permissions.canAccessLD && (
           <LDTrackingTab
             dateStr={selectedDate}
             ldLogs={ldLogs}
@@ -185,7 +208,7 @@ export default function App() {
           />
         )}
 
-        {currentTab === 'report' && (
+        {currentTab === 'report' && currentUser.permissions.canAccessReport && (
           <DailyReportTab
             dateStr={selectedDate}
             setDateStr={setSelectedDate}
@@ -203,6 +226,15 @@ export default function App() {
         staffList={staffList}
         onSaveStaffList={handleSaveStaffList}
       />
+
+      {/* Admin Management Modal */}
+      {isAdminModalOpen && (
+        <AdminManagerModal
+          isOpen={isAdminModalOpen}
+          onClose={() => setIsAdminModalOpen(false)}
+          currentUser={currentUser}
+        />
+      )}
 
       {/* Lounge Footer */}
       <footer className="border-t border-slate-900 bg-[#080a12] py-4 text-center text-xs text-slate-500">

@@ -47,6 +47,24 @@ const INITIAL_TABLES = [
   'T-1', 'T-2', 'T-3', 'T-4', 'T-5', 'T-6', 'T-7', 'T-8', 'VIP-1', 'VIP-2'
 ];
 
+const INITIAL_ADMINS = [
+  {
+    id: 'adm-01',
+    username: 'admin',
+    password: 'admin123',
+    name: 'Super Admin',
+    role: 'super',
+    permissions: {
+      canAccessAttendance: true,
+      canAccessLD: true,
+      canAccessReport: true,
+      canManageStaff: true,
+      canManageAdmins: true,
+    },
+    createdAt: new Date().toISOString(),
+  },
+];
+
 function readDB() {
   if (!fs.existsSync(DB_FILE)) {
     const defaultData = {
@@ -54,6 +72,7 @@ function readDB() {
       tables: INITIAL_TABLES,
       attendance: [],
       ldLogs: [],
+      admins: INITIAL_ADMINS,
       updatedAt: new Date().toISOString(),
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(defaultData, null, 2), 'utf-8');
@@ -69,6 +88,11 @@ function readDB() {
       writeDB(parsed);
     }
     
+    if (!parsed.admins || !Array.isArray(parsed.admins) || parsed.admins.length === 0) {
+      parsed.admins = INITIAL_ADMINS;
+      writeDB(parsed);
+    }
+
     return parsed;
   } catch (err) {
     console.error('Error reading DB file:', err);
@@ -77,6 +101,7 @@ function readDB() {
       tables: INITIAL_TABLES,
       attendance: [],
       ldLogs: [],
+      admins: INITIAL_ADMINS,
       updatedAt: new Date().toISOString(),
     };
   }
@@ -136,7 +161,7 @@ app.get('/api/db', (req, res) => {
 
 // Full Smart Sync / Save Database
 app.post('/api/db/sync', (req, res) => {
-  const { staff, tables, attendance, ldLogs } = req.body;
+  const { staff, tables, attendance, ldLogs, admins } = req.body;
   const currentDB = readDB();
   
   const updatedDB = {
@@ -144,6 +169,7 @@ app.post('/api/db/sync', (req, res) => {
     tables: Array.isArray(tables) ? tables : currentDB.tables,
     attendance: Array.isArray(attendance) ? attendance : currentDB.attendance,
     ldLogs: Array.isArray(ldLogs) ? ldLogs : currentDB.ldLogs,
+    admins: Array.isArray(admins) ? admins : (currentDB.admins || INITIAL_ADMINS),
     updatedAt: new Date().toISOString(),
   };
 

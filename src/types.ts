@@ -42,3 +42,23 @@ export interface TableSummary {
 }
 
 export type TabType = 'attendance' | 'ld' | 'report';
+
+export type AdminRoleType = 'super' | 'attendance_only' | 'ld_only' | 'report_only' | 'custom';
+
+export interface AdminPermissions {
+  canAccessAttendance: boolean;
+  canAccessLD: boolean;
+  canAccessReport: boolean;
+  canManageStaff: boolean;
+  canManageAdmins: boolean;
+}
+
+export interface AdminUser {
+  id: string;
+  username: string;
+  password: string;
+  name: string;
+  role: AdminRoleType;
+  permissions: AdminPermissions;
+  createdAt: string;
+}
