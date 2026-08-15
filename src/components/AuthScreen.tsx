@@ -29,7 +29,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onUnlock }) => {
     }
 
     const admins = loadAdmins();
-    const foundAdmin = admins.find(a => a.username === username && a.password === password);
+    const foundAdmin = admins.find(a => 
+      a.username.trim().toLowerCase() === username.trim().toLowerCase() && 
+      a.password === password
+    );
     
     if (foundAdmin) {
       setError(false);
@@ -81,6 +84,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onUnlock }) => {
                   error ? 'border-rose-500/50 ring-1 ring-rose-500/30' : 'border-slate-800 focus:border-purple-500'
                 } rounded-xl px-12 py-3.5 text-sm font-medium text-white focus:outline-none transition-all placeholder:text-slate-600`}
                 autoFocus
+                autoCapitalize="none"
+                autoComplete="username"
+                autoCorrect="off"
               />
               <User className="w-5 h-5 text-slate-500 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
@@ -97,6 +103,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onUnlock }) => {
                 className={`w-full bg-[#0b0e17] border ${
                   error ? 'border-rose-500/50 ring-1 ring-rose-500/30' : 'border-slate-800 focus:border-purple-500'
                 } rounded-xl px-12 py-3.5 text-sm font-medium text-white focus:outline-none transition-all placeholder:text-slate-600`}
+                autoCapitalize="none"
+                autoComplete="current-password"
+                autoCorrect="off"
               />
               <Lock className="w-5 h-5 text-slate-500 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>

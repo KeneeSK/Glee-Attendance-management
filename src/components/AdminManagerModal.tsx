@@ -52,14 +52,18 @@ export const AdminManagerModal: React.FC<AdminManagerModalProps> = ({ isOpen, on
       return;
     }
     
+    // Clean inputs
+    const safeUsername = editingAdmin.username.trim();
+    const safeAdmin = { ...editingAdmin, username: safeUsername };
+    
     // Check duplicate username
-    if (admins.some(a => a.username === editingAdmin.username && a.id !== editingAdmin.id)) {
+    if (admins.some(a => a.username.toLowerCase() === safeUsername.toLowerCase() && a.id !== editingAdmin.id)) {
       alert('Username already exists.');
       return;
     }
 
     // Apply role-based presets
-    let finalAdmin = { ...editingAdmin };
+    let finalAdmin = { ...safeAdmin };
     if (finalAdmin.role === 'super') {
       finalAdmin.permissions = {
         canAccessAttendance: true,
@@ -216,6 +220,8 @@ export const AdminManagerModal: React.FC<AdminManagerModalProps> = ({ isOpen, on
                       onChange={(e) => setEditingAdmin({ ...editingAdmin, username: e.target.value })}
                       className="w-full bg-[#161b2b] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
                       placeholder="e.g. jdoe123"
+                      autoCapitalize="none"
+                      autoCorrect="off"
                     />
                   </div>
 
@@ -227,6 +233,8 @@ export const AdminManagerModal: React.FC<AdminManagerModalProps> = ({ isOpen, on
                       onChange={(e) => setEditingAdmin({ ...editingAdmin, password: e.target.value })}
                       className="w-full bg-[#161b2b] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono"
                       placeholder="Enter new password"
+                      autoCapitalize="none"
+                      autoCorrect="off"
                     />
                   </div>
 
