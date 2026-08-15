@@ -155,6 +155,9 @@ function mergeTables(existingTables: string[] = [], incomingTables: string[] = [
 
 // Get full server database
 app.get('/api/db', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   const db = readDB();
   res.json({ success: true, data: db });
 });

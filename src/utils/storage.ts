@@ -320,7 +320,7 @@ function mergeClientAndServerById<T extends { id: string }>(localArr: T[], serve
 // Fetch database from Express server API and hydrate client state
 export async function fetchServerDatabase(): Promise<boolean> {
   try {
-    const res = await fetch('/api/db');
+    const res = await fetch(`/api/db?t=${Date.now()}`, { cache: 'no-store' });
     if (!res.ok) return false;
     const json = await res.json();
     if (json.success && json.data) {

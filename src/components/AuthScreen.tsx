@@ -17,7 +17,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onUnlock }) => {
     
     // Ensure we have the absolute latest admins from the server before authenticating
     try {
-      const res = await fetch('/api/db');
+      const res = await fetch(`/api/db?t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const json = await res.json();
         if (json.success && json.data && Array.isArray(json.data.admins)) {
