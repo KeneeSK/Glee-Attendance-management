@@ -70,13 +70,13 @@ export default function App() {
   }, [selectedDate]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      // First load from local, then sync with server DB
-      refreshData();
-      fetchServerDatabase().then(() => {
-        refreshData();
-      });
+    // Unconditionally fetch once to get latest admins (for login)
+    fetchServerDatabase().then(() => {
+      if (isAuthenticated) refreshData();
+    });
 
+    if (isAuthenticated) {
+      refreshData();
       // Poll server DB every 5 seconds for real-time multi-device sync
       const syncTimer = setInterval(() => {
         fetchServerDatabase().then(() => {

@@ -324,7 +324,7 @@ export async function fetchServerDatabase(): Promise<boolean> {
     if (!res.ok) return false;
     const json = await res.json();
     if (json.success && json.data) {
-      const { staff: serverStaff, tables: serverTables, attendance: serverAttendance, ldLogs: serverLdLogs } = json.data;
+      const { staff: serverStaff, tables: serverTables, attendance: serverAttendance, ldLogs: serverLdLogs, admins: serverAdmins } = json.data;
 
       if (Array.isArray(serverStaff)) {
         localStorage.setItem(KEYS.STAFF, JSON.stringify(serverStaff));
@@ -337,6 +337,9 @@ export async function fetchServerDatabase(): Promise<boolean> {
       }
       if (Array.isArray(serverLdLogs)) {
         localStorage.setItem(KEYS.LD_LOGS, JSON.stringify(serverLdLogs));
+      }
+      if (Array.isArray(serverAdmins)) {
+        localStorage.setItem(KEYS.ADMINS, JSON.stringify(serverAdmins));
       }
 
       return true;

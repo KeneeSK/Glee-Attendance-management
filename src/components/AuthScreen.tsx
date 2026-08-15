@@ -12,8 +12,22 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onUnlock }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Ensure we have the absolute latest admins from the server before authenticating
+    try {
+      const res = await fetch('/api/db');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data && Array.isArray(json.data.admins)) {
+          localStorage.setItem('lounge_admins_v2', JSON.stringify(json.data.admins));
+        }
+      }
+    } catch (err) {
+      console.warn('Could not fetch latest admins for login validation:', err);
+    }
+
     const admins = loadAdmins();
     const foundAdmin = admins.find(a => a.username === username && a.password === password);
     
