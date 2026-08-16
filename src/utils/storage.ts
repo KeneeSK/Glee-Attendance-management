@@ -42,11 +42,7 @@ export function loadAdmins(): AdminUser[] {
 export function saveAdmins(admins: AdminUser[]): void {
   try {
     localStorage.setItem(KEYS.ADMINS, JSON.stringify(admins));
-    fetch('/api/db/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ admins }),
-    }).catch((err) => console.warn('Server DB sync warning:', err));
+    syncToFirestore('admins', admins);
   } catch (err) {
     console.error('Failed to save admins:', err);
   }
@@ -69,12 +65,7 @@ export function loadTableList(): string[] {
 export function saveTableList(tables: string[]): void {
   try {
     localStorage.setItem(KEYS.TABLES, JSON.stringify(tables));
-    // Asynchronously push to server DB
-    fetch('/api/db/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tables }),
-    }).catch((err) => console.warn('Server DB sync warning:', err));
+    syncToFirestore('tables', tables);
   } catch (err) {
     console.error('Failed to save table list:', err);
   }
@@ -156,11 +147,7 @@ export function loadStaffList(): Staff[] {
 export function saveStaffList(staffList: Staff[]): void {
   try {
     localStorage.setItem(KEYS.STAFF, JSON.stringify(staffList));
-    fetch('/api/db/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ staff: staffList }),
-    }).catch((err) => console.warn('Server DB sync warning:', err));
+    syncToFirestore('staff', staffList);
   } catch (err) {
     console.error('Failed to save staff list:', err);
   }
@@ -186,11 +173,7 @@ export function loadAllAttendance(): AttendanceRecord[] {
 export function saveAllAttendance(records: AttendanceRecord[]): void {
   try {
     localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(records));
-    fetch('/api/db/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ attendance: records }),
-    }).catch((err) => console.warn('Server DB sync warning:', err));
+    syncToFirestore('attendance', records);
   } catch (err) {
     console.error('Failed to save attendance:', err);
   }
@@ -285,11 +268,7 @@ export function loadAllLDLogs(): LDLogEntry[] {
 export function saveAllLDLogs(logs: LDLogEntry[]): void {
   try {
     localStorage.setItem(KEYS.LD_LOGS, JSON.stringify(logs));
-    fetch('/api/db/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ldLogs: logs }),
-    }).catch((err) => console.warn('Server DB sync warning:', err));
+    syncToFirestore('ldLogs', logs);
   } catch (err) {
     console.error('Failed to save LD logs:', err);
   }
@@ -320,30 +299,25 @@ function mergeClientAndServerById<T extends { id: string }>(localArr: T[], serve
 // Fetch database from Express server API and hydrate client state
 export async function fetchServerDatabase(): Promise<boolean> {
   try {
-    const res = await fetch(`/api/db?t=${Date.now()}`, { cache: 'no-store' });
-    if (!res.ok) return false;
-    const json = await res.json();
-    if (json.success && json.data) {
-      const { staff: serverStaff, tables: serverTables, attendance: serverAttendance, ldLogs: serverLdLogs, admins: serverAdmins } = json.data;
-
-      if (Array.isArray(serverStaff)) {
-        localStorage.setItem(KEYS.STAFF, JSON.stringify(serverStaff));
+    const collections = [
+      { id: 'admins', key: KEYS.ADMINS },
+      { id: 'tables', key: KEYS.TABLES },
+      { id: 'staff', key: KEYS.STAFF },
+      { id: 'attendance', key: KEYS.ATTENDANCE },
+      { id: 'ldLogs', key: KEYS.LD_LOGS },
+    ];
+    let fetched = false;
+    for (const c of collections) {
+      const snapshot = await getDoc(doc(db, 'loungeData', c.id));
+      if (snapshot.exists()) {
+        const data = snapshot.data().data;
+        if (Array.isArray(data)) {
+          localStorage.setItem(c.key, JSON.stringify(data));
+          fetched = true;
+        }
       }
-      if (Array.isArray(serverTables)) {
-        localStorage.setItem(KEYS.TABLES, JSON.stringify(serverTables));
-      }
-      if (Array.isArray(serverAttendance)) {
-        localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(serverAttendance));
-      }
-      if (Array.isArray(serverLdLogs)) {
-        localStorage.setItem(KEYS.LD_LOGS, JSON.stringify(serverLdLogs));
-      }
-      if (Array.isArray(serverAdmins)) {
-        localStorage.setItem(KEYS.ADMINS, JSON.stringify(serverAdmins));
-      }
-
-      return true;
     }
+    return fetched;
   } catch (err) {
     console.warn('Could not fetch server database (running offline or standalone):', err);
   }

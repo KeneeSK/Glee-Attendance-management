@@ -162,6 +162,31 @@ app.get('/api/db', (req, res) => {
   res.json({ success: true, data: db });
 });
 
+// Server-side Authentication
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ success: false, message: 'Missing credentials' });
+  }
+
+  const db = readDB();
+  const admins = db.admins || [];
+  
+  const user = username.trim().toLowerCase();
+  const pass = password.trim();
+
+  const foundAdmin = admins.find((a: any) => 
+    (a.username || '').trim().toLowerCase() === user && 
+    (a.password || '').trim() === pass
+  );
+
+  if (foundAdmin) {
+    res.json({ success: true, admin: foundAdmin });
+  } else {
+    res.status(401).json({ success: false, message: 'Invalid credentials' });
+  }
+});
+
 // Full Smart Sync / Save Database
 app.post('/api/db/sync', (req, res) => {
   const { staff, tables, attendance, ldLogs, admins } = req.body;

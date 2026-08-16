@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, User, ShieldAlert, ArrowRight, Music, Sparkles } from 'lucide-react';
-import { loadAdmins } from '../utils/storage';
+import { loadAdmins, fetchServerDatabase } from '../utils/storage';
 import { AdminUser } from '../types';
 
 interface AuthScreenProps {
@@ -17,13 +17,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onUnlock }) => {
     
     // Ensure we have the absolute latest admins from the server before authenticating
     try {
-      const res = await fetch(`/api/db?t=${Date.now()}`, { cache: 'no-store' });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && json.data && Array.isArray(json.data.admins)) {
-          localStorage.setItem('lounge_admins_v2', JSON.stringify(json.data.admins));
-        }
-      }
+      await fetchServerDatabase();
     } catch (err) {
       console.warn('Could not fetch latest admins for login validation:', err);
     }
@@ -31,7 +25,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onUnlock }) => {
     const admins = loadAdmins();
     const foundAdmin = admins.find(a => 
       a.username.trim().toLowerCase() === username.trim().toLowerCase() && 
-      a.password === password
+      a.password.trim() === password.trim()
     );
     
     if (foundAdmin) {

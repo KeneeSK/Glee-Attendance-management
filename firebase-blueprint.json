@@ -1,0 +1,75 @@
+{
+  "$schema": "https://raw.githubusercontent.com/firebase/firebase-tools/master/schema/blueprint.json",
+  "project": {
+    "projectId": "gen-lang-client-0542795675"
+  },
+  "firestore": {
+    "collections": {
+      "staff": {
+        "description": "Staff members.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "role": { "type": "string" },
+            "defaultSchedule": { "type": "string" },
+            "active": { "type": "boolean" }
+          }
+        }
+      },
+      "settings": {
+        "description": "App settings like tables.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "tables": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      },
+      "attendance": {
+        "description": "Attendance records.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "date": { "type": "string" },
+            "staffId": { "type": "string" },
+            "status": { "type": "string" },
+            "timeIn": { "type": "string" },
+            "timeOut": { "type": "string" },
+            "remarks": { "type": "string" }
+          }
+        }
+      },
+      "ldLogs": {
+        "description": "LD logs.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "date": { "type": "string" },
+            "staffId": { "type": "string" },
+            "amount": { "type": "number" },
+            "tableNo": { "type": "string" },
+            "timestamp": { "type": "string" }
+          }
+        }
+      },
+      "admins": {
+        "description": "Admin accounts.",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "username": { "type": "string" },
+            "password": { "type": "string" },
+            "name": { "type": "string" },
+            "role": { "type": "string" },
+            "permissions": { "type": "object" },
+            "createdAt": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}
