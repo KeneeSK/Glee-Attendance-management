@@ -14,6 +14,7 @@ import {
   importDatabaseJSON,
   backupAllDataToLocalStorage,
   fetchServerDatabase,
+  subscribeToServerDatabase,
 } from './utils/storage';
 import { getTodayDateString } from './utils/initialData';
 import { Header } from './components/Header';
@@ -77,14 +78,12 @@ export default function App() {
 
     if (isAuthenticated) {
       refreshData();
-      // Poll server DB every 5 seconds for real-time multi-device sync
-      const syncTimer = setInterval(() => {
-        fetchServerDatabase().then(() => {
-          refreshData();
-        });
-      }, 5000);
+      // Listen to real-time updates from Firestore
+      const unsubscribe = subscribeToServerDatabase(() => {
+        refreshData();
+      });
 
-      return () => clearInterval(syncTimer);
+      return () => unsubscribe();
     }
   }, [refreshData, isAuthenticated]);
 

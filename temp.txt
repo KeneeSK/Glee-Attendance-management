@@ -1,15 +1,3 @@
-
-import { db } from '../lib/firebase';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
-
-async function syncToFirestore(collectionName: string, data: any) {
-  try {
-    await setDoc(doc(db, 'loungeData', collectionName), { data });
-  } catch (err) {
-    console.warn('Firestore sync warning:', err);
-  }
-}
-
 import { Staff, AttendanceRecord, LDLogEntry, AdminUser } from '../types';
 import { DEFAULT_STAFF_LIST, PRESET_TABLES, generateInitialAttendance, generateInitialLDLogs, getTodayDateString } from './initialData';
 
@@ -309,7 +297,6 @@ function mergeClientAndServerById<T extends { id: string }>(localArr: T[], serve
 }
 
 // Fetch database from Express server API and hydrate client state
-
 export async function fetchServerDatabase(): Promise<boolean> {
   try {
     const collections = [
@@ -332,39 +319,10 @@ export async function fetchServerDatabase(): Promise<boolean> {
     }
     return fetched;
   } catch (err) {
-    console.warn('Could not fetch server database:', err);
+    console.warn('Could not fetch server database (running offline or standalone):', err);
   }
   return false;
 }
-
-export function subscribeToServerDatabase(onUpdate: () => void): () => void {
-  const collections = [
-    { id: 'admins', key: KEYS.ADMINS },
-    { id: 'tables', key: KEYS.TABLES },
-    { id: 'staff', key: KEYS.STAFF },
-    { id: 'attendance', key: KEYS.ATTENDANCE },
-    { id: 'ldLogs', key: KEYS.LD_LOGS },
-  ];
-
-  const unsubscribes = collections.map(c => {
-    return onSnapshot(doc(db, 'loungeData', c.id), (snapshot) => {
-      // Ignore if this is triggered by our own local write to prevent UI cursor jumping
-      if (snapshot.metadata.hasPendingWrites) return;
-      if (snapshot.exists()) {
-        const data = snapshot.data().data;
-        if (Array.isArray(data)) {
-          localStorage.setItem(c.key, JSON.stringify(data));
-          onUpdate();
-        }
-      }
-    });
-  });
-
-  return () => {
-    unsubscribes.forEach(unsub => unsub());
-  };
-}
-
 
 export function getLDLogsForDate(dateStr: string): LDLogEntry[] {
   const all = loadAllLDLogs();
