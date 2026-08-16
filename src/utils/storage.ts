@@ -228,16 +228,16 @@ export function getAttendanceForDate(dateStr: string): AttendanceRecord[] {
       resultMap.set(staff.id, newRec);
       updated = true;
     } else {
+      // Just update the staffName to keep it in sync with Staff Manager changes,
+      // but DO NOT revert the 'schedule' which might have been manually changed!
       const existing = resultMap.get(staff.id)!;
-      if (existing.staffName !== staff.name || existing.schedule !== staff.defaultSchedule) {
+      if (existing.staffName !== staff.name) {
         existing.staffName = staff.name;
-        existing.schedule = staff.defaultSchedule;
         updated = true;
       }
     }
   });
 
-  // Clean up 'all' to replace records for dateStr with only active staff records
   const otherDatesRecords = all.filter((r) => r.date !== dateStr);
   const currentActiveDateRecords = activeStaff.map((staff) => resultMap.get(staff.id)!);
   const cleanedAll = [...otherDatesRecords, ...currentActiveDateRecords];
@@ -337,6 +337,7 @@ export async function fetchServerDatabase(): Promise<boolean> {
   return false;
 }
 
+
 export function subscribeToServerDatabase(onUpdate: () => void): () => void {
   const collections = [
     { id: 'admins', key: KEYS.ADMINS },
@@ -348,15 +349,21 @@ export function subscribeToServerDatabase(onUpdate: () => void): () => void {
 
   const unsubscribes = collections.map(c => {
     return onSnapshot(doc(db, 'loungeData', c.id), (snapshot) => {
-      // Ignore if this is triggered by our own local write to prevent UI cursor jumping
-      if (snapshot.metadata.hasPendingWrites) return;
+      // Remove the hasPendingWrites return to ensure we ALWAYS sync state correctly
       if (snapshot.exists()) {
         const data = snapshot.data().data;
         if (Array.isArray(data)) {
-          localStorage.setItem(c.key, JSON.stringify(data));
-          onUpdate();
+          const currentData = localStorage.getItem(c.key);
+          const newDataStr = JSON.stringify(data);
+          // Only trigger update if data actually changed to prevent infinite loops
+          if (currentData !== newDataStr) {
+            localStorage.setItem(c.key, newDataStr);
+            onUpdate();
+          }
         }
       }
+    }, (error) => {
+      console.error(`Firebase snapshot error for ${c.id}:`, error);
     });
   });
 
@@ -364,6 +371,7 @@ export function subscribeToServerDatabase(onUpdate: () => void): () => void {
     unsubscribes.forEach(unsub => unsub());
   };
 }
+
 
 
 export function getLDLogsForDate(dateStr: string): LDLogEntry[] {

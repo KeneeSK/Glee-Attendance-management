@@ -13,8 +13,8 @@ import {
   exportDatabaseJSON,
   importDatabaseJSON,
   backupAllDataToLocalStorage,
-  fetchServerDatabase,
   subscribeToServerDatabase,
+  fetchServerDatabase,
 } from './utils/storage';
 import { getTodayDateString } from './utils/initialData';
 import { Header } from './components/Header';
@@ -71,19 +71,17 @@ export default function App() {
   }, [selectedDate]);
 
   useEffect(() => {
-    // Unconditionally fetch once to get latest admins (for login)
-    fetchServerDatabase().then(() => {
-      if (isAuthenticated) refreshData();
-    });
-
     if (isAuthenticated) {
       refreshData();
-      // Listen to real-time updates from Firestore
+      // Listen to real-time updates from Firestore securely
       const unsubscribe = subscribeToServerDatabase(() => {
         refreshData();
       });
 
       return () => unsubscribe();
+    } else {
+      // Unconditionally fetch once to get latest admins (for login)
+      fetchServerDatabase();
     }
   }, [refreshData, isAuthenticated]);
 
