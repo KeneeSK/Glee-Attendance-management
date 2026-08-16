@@ -1,0 +1,198 @@
+{
+  "staff": [
+    {
+      "id": "STF-01",
+      "name": "SIR KENEE",
+      "role": "Chief, Daily Operations",
+      "defaultSchedule": "6:00 PM - 4:00 AM",
+      "active": true
+    },
+    {
+      "id": "STF-02",
+      "name": "RICHAEL",
+      "role": "Chief Financial & Logistic Operations",
+      "defaultSchedule": "5:00 PM - 4:00 AM",
+      "active": true
+    },
+    {
+      "id": "STF-03",
+      "name": "MARIA",
+      "role": "Head Wait Staff",
+      "defaultSchedule": "6:00 PM - 4:00 AM",
+      "active": true
+    },
+    {
+      "id": "STF-04",
+      "name": "RICHARD",
+      "role": "DJ / Sound Technician",
+      "defaultSchedule": "6:00 PM - 3:00 AM",
+      "active": true
+    },
+    {
+      "id": "STF-05",
+      "name": "DJ LYSKEE",
+      "role": "DJ / Sound Technician",
+      "defaultSchedule": "6:00 PM - 3:00 AM",
+      "active": true
+    },
+    {
+      "id": "STF-06",
+      "name": "RYAN",
+      "role": "Head Chef",
+      "defaultSchedule": "5:00 PM - 2:00 AM",
+      "active": true
+    },
+    {
+      "id": "STF-07",
+      "name": "JOLANDS",
+      "role": "Kitchen Staff",
+      "defaultSchedule": "6:00 PM - 3:00 AM",
+      "active": true
+    },
+    {
+      "id": "STF-08",
+      "name": "JR",
+      "role": "Kitchen Staff",
+      "defaultSchedule": "7:00 PM - 4:00 AM",
+      "active": true
+    },
+    {
+      "id": "STF-09",
+      "name": "CAMILLE",
+      "role": "Cashier",
+      "defaultSchedule": "7:00 PM - 4:00 AM",
+      "active": true
+    },
+    {
+      "id": "STF-10",
+      "name": "NESDY",
+      "role": "Wait Staff",
+      "defaultSchedule": "7:00 PM - 4:00 AM",
+      "active": true
+    },
+    {
+      "id": "STF-11",
+      "name": "JHOANNA",
+      "role": "Wait Staff",
+      "defaultSchedule": "7:00 PM - 4:00 AM",
+      "active": true
+    },
+    {
+      "id": "STF-12",
+      "name": "MICA",
+      "role": "Wait Staff",
+      "defaultSchedule": "6:00 PM - 4:00 AM",
+      "active": true
+    },
+    {
+      "id": "STF-13",
+      "name": "MARIVIC",
+      "role": "Wait Staff",
+      "defaultSchedule": "4:30 PM - 1:30 AM",
+      "active": true
+    },
+    {
+      "id": "STF-14",
+      "name": "PRECY",
+      "role": "Wait Staff",
+      "defaultSchedule": "4:30 PM - 1:30 AM",
+      "active": true
+    },
+    {
+      "id": "STF-15",
+      "name": "NORA",
+      "role": "Wait Staff",
+      "defaultSchedule": "7:00 PM - 4:00 AM",
+      "active": true
+    },
+    {
+      "id": "STF-16",
+      "name": "YHENG",
+      "role": "Wait Staff",
+      "defaultSchedule": "4:30 PM - 1:30 AM",
+      "active": true
+    },
+    {
+      "id": "STF-17",
+      "name": "KATH",
+      "role": "Wait Staff",
+      "defaultSchedule": "4:30 PM - 1:30 AM",
+      "active": true
+    },
+    {
+      "id": "STF-18",
+      "name": "GILLI",
+      "role": "Wait Staff",
+      "defaultSchedule": "7:00 PM - 4:00 AM",
+      "active": true
+    },
+    {
+      "id": "STF-19",
+      "name": "AGA",
+      "role": "Wait Staff",
+      "defaultSchedule": "7:00 PM - 4:00 AM",
+      "active": true
+    },
+    {
+      "id": "STF-20",
+      "name": "JOHN",
+      "role": "Utility",
+      "defaultSchedule": "4:30 PM - 4:00 AM",
+      "active": true
+    },
+    {
+      "id": "STF-21",
+      "name": "JONATHAN",
+      "role": "Doorman",
+      "defaultSchedule": "4:30 PM - 4:00 AM",
+      "active": true
+    }
+  ],
+  "tables": [
+    "T-1",
+    "T-2",
+    "T-3",
+    "T-4",
+    "T-5",
+    "T-6",
+    "T-7",
+    "T-8",
+    "VIP-1",
+    "VIP-2"
+  ],
+  "attendance": [],
+  "ldLogs": [],
+  "admins": [
+    {
+      "id": "adm-01",
+      "username": "admin",
+      "password": "admin123",
+      "name": "Super Admin",
+      "role": "super",
+      "permissions": {
+        "canAccessAttendance": true,
+        "canAccessLD": true,
+        "canAccessReport": true,
+        "canManageStaff": true,
+        "canManageAdmins": true
+      },
+      "createdAt": "2026-08-16T10:15:01.196Z"
+    },
+    {
+      "id": "adm-1786822002197",
+      "username": "Maria",
+      "password": "12345",
+      "name": "Maria",
+      "role": "custom",
+      "permissions": {
+        "canAccessAttendance": true,
+        "canAccessLD": true,
+        "canAccessReport": true,
+        "canManageStaff": true,
+        "canManageAdmins": false
+      },
+      "createdAt": "2026-08-16T10:16:00.000Z"
+    }
+  ],
+  "updatedAt": "2026-08-16T10:15:08.644Z"
+}

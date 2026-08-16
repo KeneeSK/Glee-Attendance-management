@@ -29,7 +29,7 @@ export function loadAdmins(): AdminUser[] {
   try {
     const data = localStorage.getItem(KEYS.ADMINS);
     if (!data) {
-      saveAdmins([DEFAULT_ADMIN]);
+      localStorage.setItem(KEYS.ADMINS, JSON.stringify([DEFAULT_ADMIN]));
       return [DEFAULT_ADMIN];
     }
     return JSON.parse(data);
@@ -56,7 +56,7 @@ export function loadTableList(): string[] {
   try {
     const data = localStorage.getItem(KEYS.TABLES);
     if (!data) {
-      saveTableList(PRESET_TABLES);
+      localStorage.setItem(KEYS.TABLES, JSON.stringify(PRESET_TABLES));
       return PRESET_TABLES;
     }
     return JSON.parse(data);
@@ -137,13 +137,13 @@ export function loadStaffList(): Staff[] {
   try {
     const data = localStorage.getItem(KEYS.STAFF);
     if (!data) {
-      saveStaffList(DEFAULT_STAFF_LIST);
+      localStorage.setItem(KEYS.STAFF, JSON.stringify(DEFAULT_STAFF_LIST));
       return DEFAULT_STAFF_LIST;
     }
     const parsed: Staff[] = JSON.parse(data);
     // Auto-refresh if local storage still has old default staff (e.g., ABBY or old IDs)
     if (!Array.isArray(parsed) || parsed.length === 0 || parsed.some((s) => s.id?.startsWith('st-') || (s.id === 'STF-01' && s.name === 'ABBY'))) {
-      saveStaffList(DEFAULT_STAFF_LIST);
+      localStorage.setItem(KEYS.STAFF, JSON.stringify(DEFAULT_STAFF_LIST));
       return DEFAULT_STAFF_LIST;
     }
     return parsed;
@@ -173,7 +173,7 @@ export function loadAllAttendance(): AttendanceRecord[] {
       const today = getTodayDateString();
       const staff = loadStaffList();
       const initial = generateInitialAttendance(today, staff);
-      saveAllAttendance(initial);
+      localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(initial));
       return initial;
     }
     return JSON.parse(data);
@@ -272,7 +272,7 @@ export function loadAllLDLogs(): LDLogEntry[] {
       const today = getTodayDateString();
       const staff = loadStaffList();
       const initial = generateInitialLDLogs(today, staff);
-      saveAllLDLogs(initial);
+      localStorage.setItem(KEYS.LD_LOGS, JSON.stringify(initial));
       return initial;
     }
     return JSON.parse(data);
