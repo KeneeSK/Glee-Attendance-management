@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AttendanceRecord, Staff } from '../types';
 import { Users, CheckCircle2, AlertTriangle, XCircle, Search, Clock, RefreshCw, ShieldAlert } from 'lucide-react';
 import { SCHEDULE_OPTIONS } from '../utils/initialData';
+import { calculateWorkingTime } from '../utils/time';
 import { AttendanceCardList } from './AttendanceCardList';
 
 interface AttendanceTabProps {
@@ -274,6 +275,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                   <th className="px-4 py-3">Staff ID / Name</th>
                   <th className="px-4 py-3">Work Schedule</th>
                   <th className="px-4 py-3">Check-In / Check-Out</th>
+                  <th className="px-4 py-3 text-center">Working Hours</th>
                   <th className="px-4 py-3 text-center">Late</th>
                   <th className="px-4 py-3 text-center">Absent</th>
                   <th className="px-4 py-3 text-center">Day Off</th>
@@ -382,6 +384,13 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                             )}
                           </div>
                         </div>
+                      </td>
+
+                      {/* Working Hours */}
+                      <td className="px-4 py-3 text-center whitespace-nowrap">
+                        <span className="font-mono text-[11px] font-bold text-slate-300">
+                          {calculateWorkingTime(rec.checkInTime, rec.checkOutTime) || '-'}
+                        </span>
                       </td>
 
                       {/* Late Checkbox */}

@@ -366,6 +366,7 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                 <th className="px-4 py-3">Schedule</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Check-In/Out</th>
+                <th className="px-4 py-3 text-center">Working Hours</th>
                 <th className="px-4 py-3 text-center bg-purple-950/40 border-x border-purple-900/30">
                   Total LD
                 </th>
@@ -427,6 +428,11 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                     {/* CheckIn / Out */}
                     <td className="px-4 py-3 whitespace-nowrap font-mono text-slate-400">
                       {att?.checkInTime ? `${att.checkInTime} ~ ${att.checkOutTime || 'Working'}` : '-'}
+                    </td>
+
+                    {/* Working Hours */}
+                    <td className="px-4 py-3 text-center whitespace-nowrap font-mono font-bold text-slate-300">
+                      {(att?.checkInTime && att?.checkOutTime) ? calculateWorkingTime(att.checkInTime, att.checkOutTime) : '-'}
                     </td>
 
                     {/* Total LD (Highlighted) */}

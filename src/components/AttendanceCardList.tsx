@@ -2,6 +2,7 @@ import React from 'react';
 import { AttendanceRecord, Staff } from '../types';
 import { CheckCircle2, AlertTriangle, XCircle, Clock, ShieldAlert } from 'lucide-react';
 import { SCHEDULE_OPTIONS } from '../utils/initialData';
+import { calculateWorkingTime } from '../utils/time';
 
 interface Props {
   records: AttendanceRecord[];
@@ -149,6 +150,14 @@ export const AttendanceCardList: React.FC<Props> = ({ records, staffList, onUpda
                   </label>
                 </div>
               </div>
+              {rec.checkInTime && rec.checkOutTime && (
+                <div className="mt-1.5 flex items-center justify-end bg-slate-900/50 px-2 py-1.5 rounded border border-slate-800">
+                  <span className="text-[10px] text-slate-500 mr-2 uppercase font-bold tracking-wider">Working Hours:</span>
+                  <span className="text-sm font-black font-mono text-cyan-400 drop-shadow-sm">
+                    {calculateWorkingTime(rec.checkInTime, rec.checkOutTime)}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-1 mt-1">
@@ -191,6 +200,14 @@ export const AttendanceCardList: React.FC<Props> = ({ records, staffList, onUpda
                   )}
                 </div>
               </div>
+              {rec.checkInTime && rec.checkOutTime && (
+                <div className="mt-1.5 flex items-center justify-end bg-slate-900/50 px-2 py-1.5 rounded border border-slate-800">
+                  <span className="text-[10px] text-slate-500 mr-2 uppercase font-bold tracking-wider">Working Hours:</span>
+                  <span className="text-sm font-black font-mono text-cyan-400 drop-shadow-sm">
+                    {calculateWorkingTime(rec.checkInTime, rec.checkOutTime)}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-1 mt-1">

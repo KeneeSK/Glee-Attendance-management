@@ -514,7 +514,7 @@ export function downloadDailyReportCSV(dateStr: string) {
 
   // 1. Staff Attendance & LD Summary Section
   lines.push('"1. Staff Attendance & Cumulative LD Sales"');
-  lines.push('"Staff ID","Staff Name","Role","Schedule","Status","Is Late","Is Absent","Is Day Off","Is Suspended","Check In","Check Out","Total LD Drinks","Assigned Tables","Notes"');
+  lines.push('"Staff ID","Staff Name","Role","Schedule","Status","Is Late","Is Absent","Is Day Off","Is Suspended","Check In","Check Out","Working Hours","Total LD Drinks","Assigned Tables","Notes"');
 
   staffList.forEach((staff) => {
     const att = attendanceList.find((a) => a.staffId === staff.id);
@@ -539,8 +539,9 @@ export function downloadDailyReportCSV(dateStr: string) {
     const checkOut = att?.checkOutTime || '-';
     const note = (att?.note || '').replace(/"/g, '""');
 
+    const workingHours = (att?.checkInTime && att?.checkOutTime) ? calculateWorkingTime(att.checkInTime, att.checkOutTime) : '-';
     lines.push(
-      `"${staff.id}","${staff.name}","${staff.role}","${att?.schedule || staff.defaultSchedule}","${statusStr}","${isLateStr}","${isAbsentStr}","${isDayOffStr}","${isSuspendedStr}","${checkIn}","${checkOut}","${ldInfo.totalLD}","${tablesStr}","${note}"`
+      `"${staff.id}","${staff.name}","${staff.role}","${att?.schedule || staff.defaultSchedule}","${statusStr}","${isLateStr}","${isAbsentStr}","${isDayOffStr}","${isSuspendedStr}","${checkIn}","${checkOut}","${workingHours}","${ldInfo.totalLD}","${tablesStr}","${note}"`
     );
   });
 
