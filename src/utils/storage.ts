@@ -355,8 +355,37 @@ export function subscribeToServerDatabase(onUpdate: () => void): () => void {
         if (Array.isArray(data)) {
           const currentData = localStorage.getItem(c.key);
           const newDataStr = JSON.stringify(data);
-          // Only trigger update if data actually changed to prevent infinite loops
-          if (currentData !== newDataStr) {
+          
+          // Simple deep comparison to prevent infinite loops even if Firestore reorders keys
+          const isDifferent = (() => {
+            if (!currentData) return true;
+            try {
+              const parsedCurrent = JSON.parse(currentData);
+              // Compare stringified versions of sorted representations, or just stringify the parsed
+              // A quick heuristic: if lengths differ greatly, they are different.
+              // For a robust check without a library, we can just assume if the stringified versions match, they are identical.
+              // If not, we do a JSON.stringify(parsedCurrent) to normalize spacing.
+              if (JSON.stringify(parsedCurrent) === newDataStr) return false;
+              
+              // To handle key reordering:
+              const normalize = (obj: any): any => {
+                if (Array.isArray(obj)) return obj.map(normalize);
+                if (obj !== null && typeof obj === 'object') {
+                  return Object.keys(obj).sort().reduce((acc, key) => {
+                    acc[key] = normalize(obj[key]);
+                    return acc;
+                  }, {} as any);
+                }
+                return obj;
+              };
+              
+              return JSON.stringify(normalize(parsedCurrent)) !== JSON.stringify(normalize(data));
+            } catch (e) {
+              return true;
+            }
+          })();
+
+          if (isDifferent) {
             localStorage.setItem(c.key, newDataStr);
             onUpdate();
           }

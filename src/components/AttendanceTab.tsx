@@ -97,11 +97,8 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
   };
 
   const handleQuickCheckIn = (rec: AttendanceRecord) => {
-    const nowTime = new Date().toLocaleTimeString('ko-KR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
+    const now = new Date();
+    const nowTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     onUpdateRecord({
       ...rec,
       checkInTime: nowTime,
@@ -110,11 +107,8 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
   };
 
   const handleQuickCheckOut = (rec: AttendanceRecord) => {
-    const nowTime = new Date().toLocaleTimeString('ko-KR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
+    const now = new Date();
+    const nowTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     onUpdateRecord({
       ...rec,
       checkOutTime: nowTime,
