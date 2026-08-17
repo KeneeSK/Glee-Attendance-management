@@ -626,6 +626,7 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                       <th className="p-2 border border-slate-300">Working Time</th>
                       <th className="p-2 border border-slate-300 text-center bg-purple-50 font-black">Total LD</th>
                       <th className="p-2 border border-slate-300">Assigned Tables</th>
+                      <th className="p-2 border border-slate-300">Notes</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
@@ -668,6 +669,9 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                         </td>
                         <td className="p-2 border border-slate-300 font-mono text-[11px]">
                           {item.assignedTables.length > 0 ? item.assignedTables.join(', ') : '-'}
+                        </td>
+                        <td className="p-2 border border-slate-300 text-[11px] text-slate-700 italic">
+                          {item.att?.note || '-'}
                         </td>
                       </tr>
                     ))}
