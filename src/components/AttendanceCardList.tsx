@@ -168,7 +168,7 @@ export const AttendanceCardList: React.FC<Props> = ({ records, staffList, onUpda
                   initialValue={rec.checkInTime || ''}
                   onSave={(val) => onUpdateRecord({ ...rec, checkInTime: val, isAbsent: false })}
                   placeholder="Set Check-In"
-                  buttonText="근무시작"
+                  buttonText="IN"
                   disabled={isDisabled}
                   inputClass="text-emerald-400 text-sm w-full"
                   buttonClass="bg-emerald-950 hover:bg-emerald-900 text-emerald-400 px-2 py-1 flex-shrink-0"
@@ -178,7 +178,7 @@ export const AttendanceCardList: React.FC<Props> = ({ records, staffList, onUpda
                   initialValue={rec.checkOutTime || ''}
                   onSave={(val) => onUpdateRecord({ ...rec, checkOutTime: val })}
                   placeholder="Set Check-Out"
-                  buttonText="퇴근"
+                  buttonText="OUT"
                   disabled={isDisabled || !rec.checkInTime}
                   inputClass="text-slate-300 text-sm w-full"
                   buttonClass="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 flex-shrink-0"
