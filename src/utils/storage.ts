@@ -1,6 +1,7 @@
 
 import { db } from '../lib/firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { calculateWorkingTime } from './time';
 
 async function syncToFirestore(collectionName: string, data: any) {
   try {

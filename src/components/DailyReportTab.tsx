@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AttendanceRecord, LDLogEntry, Staff } from '../types';
 import { downloadDailyReportCSV } from '../utils/storage';
+import { calculateWorkingTime } from '../utils/time';
 import {
   FileSpreadsheet,
   Calendar,
