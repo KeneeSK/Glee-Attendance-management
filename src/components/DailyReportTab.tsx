@@ -662,7 +662,16 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                           )}
                         </td>
                         <td className="p-2 border border-slate-300 font-mono text-[11px]">
-                          {item.att?.checkInTime ? `${item.att.checkInTime} ~ ${item.att.checkOutTime || 'Working'}` : '-'}
+                          {item.att?.checkInTime ? (
+                            <>
+                              {item.att.checkInTime} ~ {item.att.checkOutTime || 'Working'}
+                              {item.att.checkOutTime && (
+                                <span className="ml-1 text-slate-500">
+                                  ({calculateWorkingTime(item.att.checkInTime, item.att.checkOutTime)})
+                                </span>
+                              )}
+                            </>
+                          ) : '-'}
                         </td>
                         <td className="p-2 border border-slate-300 text-center font-bold font-mono bg-purple-50 text-purple-900">
                           {item.totalLD}
