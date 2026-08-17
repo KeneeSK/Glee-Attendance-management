@@ -3,6 +3,7 @@ import { AttendanceRecord, Staff } from '../types';
 import { Users, CheckCircle2, AlertTriangle, XCircle, Search, Clock, RefreshCw, ShieldAlert } from 'lucide-react';
 import { SCHEDULE_OPTIONS } from '../utils/initialData';
 import { calculateWorkingTime } from '../utils/time';
+import { TimeInputControl } from './TimeInputControl';
 import { AttendanceCardList } from './AttendanceCardList';
 
 interface AttendanceTabProps {
@@ -343,46 +344,26 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                       <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
                           {/* In Time */}
-                          <div className="flex items-center gap-1 bg-slate-900/50 p-1 rounded border border-slate-800">
-                            <input
-                              type="time"
-                              value={rec.checkInTime || ''}
-                              onChange={(e) => onUpdateRecord({ ...rec, checkInTime: e.target.value })}
-                              disabled={isDisabled}
-                              className="bg-transparent text-emerald-300 text-xs w-20 focus:outline-none disabled:opacity-40 font-mono"
-                            />
-                            {!rec.checkInTime && (
-                              <button
-                                onClick={() => handleQuickCheckIn(rec)}
-                                disabled={isDisabled}
-                                className="px-1.5 py-1 bg-emerald-950 hover:bg-emerald-900 text-emerald-400 rounded text-[10px] font-bold transition-all disabled:opacity-30"
-                                title="Quick Check-In"
-                              >
-                                Now
-                              </button>
-                            )}
-                          </div>
+                          <TimeInputControl
+                            initialValue={rec.checkInTime || ''}
+                            onSave={(val) => onUpdateRecord({ ...rec, checkInTime: val, isAbsent: false })}
+                            placeholder="Set Check-In"
+                            buttonText="근무시작"
+                            disabled={isDisabled}
+                            inputClass="text-emerald-300"
+                            buttonClass="bg-emerald-950 hover:bg-emerald-900 text-emerald-400"
+                          />
                           <span className="text-slate-600 text-[10px]">-</span>
                           {/* Out Time */}
-                          <div className="flex items-center gap-1 bg-slate-900/50 p-1 rounded border border-slate-800">
-                            <input
-                              type="time"
-                              value={rec.checkOutTime || ''}
-                              onChange={(e) => onUpdateRecord({ ...rec, checkOutTime: e.target.value })}
-                              disabled={isDisabled}
-                              className="bg-transparent text-slate-300 text-xs w-20 focus:outline-none disabled:opacity-40 font-mono"
-                            />
-                            {rec.checkInTime && !rec.checkOutTime && (
-                              <button
-                                onClick={() => handleQuickCheckOut(rec)}
-                                disabled={isDisabled}
-                                className="px-1.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-bold transition-all disabled:opacity-30"
-                                title="Quick Check-Out"
-                              >
-                                Now
-                              </button>
-                            )}
-                          </div>
+                          <TimeInputControl
+                            initialValue={rec.checkOutTime || ''}
+                            onSave={(val) => onUpdateRecord({ ...rec, checkOutTime: val })}
+                            placeholder="Set Check-Out"
+                            buttonText="퇴근"
+                            disabled={isDisabled || !rec.checkInTime}
+                            inputClass="text-slate-300"
+                            buttonClass="bg-slate-800 hover:bg-slate-700 text-slate-300"
+                          />
                         </div>
                       </td>
 

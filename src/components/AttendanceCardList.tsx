@@ -3,6 +3,7 @@ import { AttendanceRecord, Staff } from '../types';
 import { CheckCircle2, AlertTriangle, XCircle, Clock, ShieldAlert } from 'lucide-react';
 import { SCHEDULE_OPTIONS } from '../utils/initialData';
 import { calculateWorkingTime } from '../utils/time';
+import { TimeInputControl } from './TimeInputControl';
 
 interface Props {
   records: AttendanceRecord[];
@@ -163,42 +164,26 @@ export const AttendanceCardList: React.FC<Props> = ({ records, staffList, onUpda
             <div className="flex flex-col gap-1 mt-1">
               <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Check In / Out</label>
               <div className="flex items-center gap-2">
-                <div className="flex flex-1 items-center justify-between bg-slate-950 p-1.5 rounded border border-slate-800">
-                  <input
-                    type="time"
-                    value={rec.checkInTime || ''}
-                    onChange={(e) => onUpdateRecord({ ...rec, checkInTime: e.target.value })}
-                    disabled={isDisabled}
-                    className="bg-transparent text-emerald-400 text-sm font-mono w-full focus:outline-none disabled:opacity-40"
-                  />
-                  {!rec.checkInTime && (
-                    <button
-                      onClick={() => handleQuickCheckIn(rec)}
-                      disabled={isDisabled}
-                      className="px-2 py-1 bg-emerald-950 hover:bg-emerald-900 text-emerald-400 rounded text-[10px] font-bold transition-all disabled:opacity-30 flex items-center gap-1"
-                    >
-                      <Clock className="w-3 h-3" /> IN
-                    </button>
-                  )}
-                </div>
-                <div className="flex flex-1 items-center justify-between bg-slate-950 p-1.5 rounded border border-slate-800">
-                  <input
-                    type="time"
-                    value={rec.checkOutTime || ''}
-                    onChange={(e) => onUpdateRecord({ ...rec, checkOutTime: e.target.value })}
-                    disabled={isDisabled}
-                    className="bg-transparent text-slate-300 text-sm font-mono w-full focus:outline-none disabled:opacity-40"
-                  />
-                  {rec.checkInTime && !rec.checkOutTime && (
-                    <button
-                      onClick={() => handleQuickCheckOut(rec)}
-                      disabled={isDisabled}
-                      className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-bold transition-all disabled:opacity-30 flex items-center gap-1"
-                    >
-                      <Clock className="w-3 h-3" /> OUT
-                    </button>
-                  )}
-                </div>
+                <TimeInputControl
+                  initialValue={rec.checkInTime || ''}
+                  onSave={(val) => onUpdateRecord({ ...rec, checkInTime: val, isAbsent: false })}
+                  placeholder="Set Check-In"
+                  buttonText="근무시작"
+                  disabled={isDisabled}
+                  inputClass="text-emerald-400 text-sm w-full"
+                  buttonClass="bg-emerald-950 hover:bg-emerald-900 text-emerald-400 px-2 py-1 flex-shrink-0"
+                  wrapperClass="flex-1"
+                />
+                <TimeInputControl
+                  initialValue={rec.checkOutTime || ''}
+                  onSave={(val) => onUpdateRecord({ ...rec, checkOutTime: val })}
+                  placeholder="Set Check-Out"
+                  buttonText="퇴근"
+                  disabled={isDisabled || !rec.checkInTime}
+                  inputClass="text-slate-300 text-sm w-full"
+                  buttonClass="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 flex-shrink-0"
+                  wrapperClass="flex-1"
+                />
               </div>
               {rec.checkInTime && rec.checkOutTime && (
                 <div className="mt-1.5 flex items-center justify-end bg-slate-900/50 px-2 py-1.5 rounded border border-slate-800">
