@@ -383,7 +383,7 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
             <thead className="bg-slate-950/80 text-slate-400 font-semibold border-b border-slate-800 uppercase text-[11px]">
               <tr>
                 <th className="px-4 py-3">Staff ID</th>
-                <th className="px-4 py-3">Name / Role</th>
+                <th className="px-4 py-3">Name</th>
                 <th className="px-4 py-3">Schedule</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Check-In/Out</th>
@@ -413,13 +413,10 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                       {staff.id}
                     </td>
 
-                    {/* Name & Role */}
+                    {/* Name */}
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="font-semibold text-slate-100 flex items-center gap-1.5">
                         <span>{staff.name}</span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700">
-                          {staff.role}
-                        </span>
                       </div>
                     </td>
 
@@ -658,7 +655,7 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                   <thead className="bg-slate-100 text-slate-800 font-bold text-[10px] uppercase border-b border-slate-300">
                     <tr>
                       <th className="p-2 border border-slate-300">Staff ID</th>
-                      <th className="p-2 border border-slate-300">Name / Role</th>
+                      <th className="p-2 border border-slate-300">Name</th>
                       <th className="p-2 border border-slate-300">Status</th>
                       <th className="p-2 border border-slate-300 whitespace-nowrap">Working Time</th>
                       <th className="p-2 border border-slate-300 text-center bg-purple-50 font-black">Total LD</th>
@@ -677,7 +674,7 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                         {roleRecords.map((item) => (
                       <tr key={item.staff.id} className="text-slate-800">
                         <td className="p-2 border border-slate-300 font-mono text-[11px]">{item.staff.id}</td>
-                        <td className="p-2 border border-slate-300 font-bold">{item.staff.name} ({item.staff.role})</td>
+                        <td className="p-2 border border-slate-300 font-bold">{item.staff.name}</td>
                         <td className="p-2 border border-slate-300">
                           {item.statusType === 'suspended' ? (
                             <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-900 border border-orange-300 uppercase">
