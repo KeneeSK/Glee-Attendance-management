@@ -48,6 +48,16 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
     return true;
   });
 
+  const groupedFilteredRecords = Array.from(
+    filteredRecords.reduce((acc, rec) => {
+      const staffObj = staffList.find((s) => s.id === rec.staffId);
+      const role = staffObj?.role || 'Unassigned';
+      if (!acc.has(role)) acc.set(role, []);
+      acc.get(role)!.push(rec);
+      return acc;
+    }, new Map<string, typeof filteredRecords>())
+  );
+
   const handleToggleLate = (rec: AttendanceRecord) => {
     const newLate = !rec.isLate;
     onUpdateRecord({
@@ -286,8 +296,15 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {filteredRecords.map((rec) => {
-                  const staffObj = staffList.find((s) => s.id === rec.staffId);
+                {groupedFilteredRecords.map(([role, roleRecords]) => (
+                  <React.Fragment key={role}>
+                    <tr className="bg-slate-900 border-b border-slate-700">
+                      <td colSpan={10} className="px-4 py-2 text-sm font-bold text-slate-300 uppercase tracking-widest border-l-2 border-purple-500">
+                        {role}
+                      </td>
+                    </tr>
+                    {roleRecords.map((rec) => {
+                      const staffObj = staffList.find((s) => s.id === rec.staffId);
                   const isAbsent = rec.isAbsent;
                   const isDayOff = rec.isDayOff;
                   const isSuspended = rec.isSuspended;
@@ -465,6 +482,8 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                     </tr>
                   );
                 })}
+                  </React.Fragment>
+                ))}
               </tbody>
             </table>
           </div>

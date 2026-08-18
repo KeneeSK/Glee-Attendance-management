@@ -40,10 +40,24 @@ export const AttendanceCardList: React.FC<Props> = ({ records, staffList, onUpda
     onUpdateRecord({ ...rec, isSuspended: !rec.isSuspended, isAbsent: false, isDayOff: false, isLate: false, checkInTime: '', checkOutTime: '' });
   };
 
+  const groupedRecords = Array.from(
+    records.reduce((acc, rec) => {
+      const staffObj = staffList.find((s) => s.id === rec.staffId);
+      const role = staffObj?.role || 'Unassigned';
+      if (!acc.has(role)) acc.set(role, []);
+      acc.get(role)!.push(rec);
+      return acc;
+    }, new Map<string, AttendanceRecord[]>())
+  );
+
   return (
-    <div className="flex flex-col gap-3 p-3">
-      {records.map((rec) => {
-        const staffObj = staffList.find((s) => s.id === rec.staffId);
+    <div className="flex flex-col gap-6 p-3">
+      {groupedRecords.map(([role, roleRecords]) => (
+        <div key={role} className="flex flex-col gap-3">
+          <h3 className="text-sm font-bold text-slate-300 px-1 border-l-2 border-purple-500 uppercase tracking-widest">{role}</h3>
+          <div className="flex flex-col gap-3">
+            {roleRecords.map((rec) => {
+              const staffObj = staffList.find((s) => s.id === rec.staffId);
         const isAbsent = rec.isAbsent;
         const isDayOff = rec.isDayOff;
         const isSuspended = rec.isSuspended;
@@ -209,6 +223,9 @@ export const AttendanceCardList: React.FC<Props> = ({ records, staffList, onUpda
           </div>
         );
       })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

@@ -82,6 +82,15 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
     };
   });
 
+  const groupedStaffSummary = Array.from(
+    staffSummaryList.reduce((acc, item) => {
+      const role = item.staff.role || 'Unassigned';
+      if (!acc.has(role)) acc.set(role, []);
+      acc.get(role)!.push(item);
+      return acc;
+    }, new Map<string, typeof staffSummaryList>())
+  );
+
   // Calculate Overall Key Metrics
   const totalLDCount = ldLogs.reduce((sum, l) => sum + l.amount, 0);
   const lateCount = staffSummaryList.filter((s) => s.statusType === 'late').length;
@@ -376,8 +385,15 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
-              {staffSummaryList.map((item) => {
-                const { staff, att, totalLD, assignedTables, statusType } = item;
+              {groupedStaffSummary.map(([role, roleRecords]) => (
+                <React.Fragment key={role}>
+                  <tr className="bg-slate-900 border-b border-slate-700">
+                    <td colSpan={7} className="px-4 py-2 text-sm font-bold text-slate-300 uppercase tracking-widest border-l-2 border-purple-500">
+                      {role}
+                    </td>
+                  </tr>
+                  {roleRecords.map((item) => {
+                    const { staff, att, totalLD, assignedTables, statusType } = item;
 
                 return (
                   <tr key={staff.id} className="hover:bg-slate-800/40 transition-colors">
@@ -468,6 +484,8 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                   </tr>
                 );
               })}
+                </React.Fragment>
+              ))}
             </tbody>
           </table>
         </div>
@@ -630,7 +648,14 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
-                    {staffSummaryList.map((item) => (
+                    {groupedStaffSummary.map(([role, roleRecords]) => (
+                      <React.Fragment key={role}>
+                        <tr className="bg-slate-100">
+                          <td colSpan={7} className="p-2 border border-slate-300 font-bold text-slate-800 uppercase text-[11px] bg-slate-100">
+                            {role}
+                          </td>
+                        </tr>
+                        {roleRecords.map((item) => (
                       <tr key={item.staff.id} className="text-slate-800">
                         <td className="p-2 border border-slate-300 font-mono text-[11px]">{item.staff.id}</td>
                         <td className="p-2 border border-slate-300 font-bold">{item.staff.name} ({item.staff.role})</td>
@@ -683,6 +708,8 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                           {item.att?.note || '-'}
                         </td>
                       </tr>
+                    ))}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
