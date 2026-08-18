@@ -335,11 +335,6 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                           <span className={`font-semibold ${isDisabled ? 'line-through text-slate-500' : 'text-slate-100'}`}>
                             {rec.staffName}
                           </span>
-                          {staffObj?.role && (
-                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-950/60 text-purple-300 border border-purple-800/40">
-                              {staffObj.role}
-                            </span>
-                          )}
                         </div>
                       </td>
 
