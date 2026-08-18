@@ -616,27 +616,27 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
               <div className="grid grid-cols-6 gap-2 text-center border border-slate-300 rounded-lg p-2.5 bg-slate-50">
                 <div className="border-r border-slate-300 pr-1">
                   <div className="text-[9px] text-slate-500 font-bold uppercase">Total LD Sales</div>
-                  <div className="text-base font-black text-slate-900 font-mono">{totalLDCount} drinks</div>
+                  <div className="text-base font-black text-slate-900 font-mono">{totalLDCount}</div>
                 </div>
                 <div className="border-r border-slate-300 px-1">
                   <div className="text-[9px] text-slate-500 font-bold uppercase">Working</div>
-                  <div className="text-base font-black text-slate-900 font-mono">{workingStaffCount} staff</div>
+                  <div className="text-base font-black text-slate-900 font-mono">{workingStaffCount}</div>
                 </div>
                 <div className="border-r border-slate-300 px-1">
                   <div className="text-[9px] text-slate-500 font-bold uppercase">Late</div>
-                  <div className="text-base font-black text-amber-800 font-mono">{lateCount} staff</div>
+                  <div className="text-base font-black text-amber-800 font-mono">{lateCount}</div>
                 </div>
                 <div className="border-r border-slate-300 px-1">
                   <div className="text-[9px] text-slate-500 font-bold uppercase">Absent</div>
-                  <div className="text-base font-black text-rose-800 font-mono">{absentCount} staff</div>
+                  <div className="text-base font-black text-rose-800 font-mono">{absentCount}</div>
                 </div>
                 <div className="border-r border-slate-300 px-1">
                   <div className="text-[9px] text-slate-500 font-bold uppercase">Day Off</div>
-                  <div className="text-base font-black text-sky-800 font-mono">{dayOffCount} staff</div>
+                  <div className="text-base font-black text-sky-800 font-mono">{dayOffCount}</div>
                 </div>
                 <div className="pl-1">
                   <div className="text-[9px] text-slate-500 font-bold uppercase">Suspended</div>
-                  <div className="text-base font-black text-orange-800 font-mono">{suspendedCount} staff</div>
+                  <div className="text-base font-black text-orange-800 font-mono">{suspendedCount}</div>
                 </div>
               </div>
 
