@@ -439,9 +439,17 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-950 text-amber-300 border border-amber-800">
                           <AlertTriangle className="w-3 h-3" /> Late
                         </span>
-                      ) : (
+                      ) : statusType === 'present' ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-950 text-emerald-300 border border-emerald-800">
                           <CheckCircle2 className="w-3 h-3" /> On Time
+                        </span>
+                      ) : statusType === 'pending' ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-800 text-slate-400 border border-slate-700">
+                          Pending
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-800 text-slate-400 border border-slate-700">
+                          Unregistered
                         </span>
                       )}
                     </td>
