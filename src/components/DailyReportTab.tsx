@@ -653,7 +653,7 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                       <th className="p-2 border border-slate-300">Staff ID</th>
                       <th className="p-2 border border-slate-300">Name / Role</th>
                       <th className="p-2 border border-slate-300">Status</th>
-                      <th className="p-2 border border-slate-300">Working Time</th>
+                      <th className="p-2 border border-slate-300 whitespace-nowrap">Working Time</th>
                       <th className="p-2 border border-slate-300 text-center bg-purple-50 font-black">Total LD</th>
                       <th className="p-2 border border-slate-300">Assigned Tables</th>
                       <th className="p-2 border border-slate-300">Notes</th>
@@ -702,7 +702,7 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                             </span>
                           )}
                         </td>
-                        <td className="p-2 border border-slate-300 font-mono text-[11px]">
+                        <td className="p-2 border border-slate-300 font-mono text-[11px] whitespace-nowrap">
                           {item.att?.checkInTime ? (
                             <>
                               {item.att.checkInTime} ~ {item.att.checkOutTime || 'Working'}
