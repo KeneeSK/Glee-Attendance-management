@@ -62,13 +62,14 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
       if (l.tableNo) tablesSet.add(l.tableNo);
     });
 
-    let statusType: 'present' | 'late' | 'absent' | 'dayoff' | 'suspended' | 'unregistered' = 'present';
+    let statusType: 'present' | 'late' | 'absent' | 'dayoff' | 'suspended' | 'unregistered' | 'pending' = 'pending';
     if (att) {
       if (att.isAbsent) statusType = 'absent';
       else if (att.isSuspended) statusType = 'suspended';
       else if (att.isDayOff) statusType = 'dayoff';
       else if (att.isLate) statusType = 'late';
-      else statusType = 'present';
+      else if (att.checkInTime) statusType = 'present';
+      else statusType = 'pending';
     } else {
       statusType = 'unregistered';
     }
@@ -126,12 +127,15 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
     drinks: val.totalLD,
   }));
 
+  const pendingCount = staffSummaryList.filter((s) => s.statusType === 'pending').length;
+
   const attendancePieData = [
     { name: 'On Time', value: presentCount, color: '#10b981' },
     { name: 'Late', value: lateCount, color: '#f59e0b' },
     { name: 'Absent', value: absentCount, color: '#f43f5e' },
     { name: 'Day Off', value: dayOffCount, color: '#0284c7' },
     { name: 'Suspended', value: suspendedCount, color: '#f97316' },
+    { name: 'Pending', value: pendingCount, color: '#94a3b8' },
   ].filter((item) => item.value > 0);
 
   const handleExportCSV = () => {
@@ -679,6 +683,10 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                           ) : item.statusType === 'present' ? (
                             <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 uppercase">
                               On Time
+                            </span>
+                          ) : item.statusType === 'pending' ? (
+                            <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-slate-100 text-slate-700 border border-slate-300 uppercase">
+                              Pending
                             </span>
                           ) : (
                             <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-slate-100 text-slate-700 border border-slate-300 uppercase">
