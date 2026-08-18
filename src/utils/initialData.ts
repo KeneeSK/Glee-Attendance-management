@@ -41,6 +41,12 @@ export const PRESET_TABLES = [
 
 export function getTodayDateString(): string {
   const now = new Date();
+  
+  // If the current time is before 5:00 AM, consider it the previous business day.
+  if (now.getHours() < 5) {
+    now.setDate(now.getDate() - 1);
+  }
+
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
