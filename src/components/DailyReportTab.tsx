@@ -120,12 +120,8 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
       drinks: s.totalLD,
       role: s.staff.role,
     }))
+    .filter((s) => s.drinks > 0)
     .sort((a, b) => b.drinks - a.drinks);
-
-  const tableChartData = Array.from(tableSummaryMap.entries()).map(([tableNo, val]) => ({
-    tableNo,
-    drinks: val.totalLD,
-  }));
 
   const pendingCount = staffSummaryList.filter((s) => s.statusType === 'pending').length;
 
@@ -286,26 +282,37 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
             </div>
             <span className="text-[11px] text-slate-400 font-mono">Date: {dateStr}</span>
           </div>
-
-          <div className="h-64 w-full pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={staffChartData} margin={{ top: 10, right: 10, left: -20, bottom: 25 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} interval={0} angle={-25} textAnchor="end" />
-                <YAxis stroke="#94a3b8" fontSize={11} allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0f172a',
-                    borderColor: '#475569',
-                    borderRadius: '8px',
-                    color: '#f8fafc',
-                    fontSize: '12px',
-                  }}
-                  formatter={(value: any) => [`${value} drinks`, 'LD Sales']}
-                />
-                <Bar dataKey="drinks" fill="#a855f7" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          
+          <div className="w-full pt-2 overflow-y-auto custom-scrollbar" style={{ height: '300px' }}>
+            {staffChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={Math.max(250, staffChartData.length * 40)}>
+                <BarChart 
+                  data={staffChartData} 
+                  layout="vertical" 
+                  margin={{ top: 10, right: 30, left: 30, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
+                  <XAxis type="number" stroke="#94a3b8" fontSize={11} allowDecimals={false} />
+                  <YAxis dataKey="name" type="category" stroke="#94a3b8" fontSize={11} width={80} interval={0} />
+                  <Tooltip
+                    cursor={{ fill: '#1e293b', opacity: 0.4 }}
+                    contentStyle={{
+                      backgroundColor: '#0f172a',
+                      borderColor: '#475569',
+                      borderRadius: '8px',
+                      color: '#f8fafc',
+                      fontSize: '12px',
+                    }}
+                    formatter={(value: any) => [`${value} drinks`, 'LD Sales']}
+                  />
+                  <Bar dataKey="drinks" fill="#a855f7" radius={[0, 6, 6, 0]} barSize={20} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-slate-500 text-sm">
+                No LD sales recorded yet.
+              </div>
+            )}
           </div>
         </div>
 
