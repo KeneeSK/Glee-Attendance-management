@@ -19,6 +19,7 @@ import {
   FileText,
   Building2,
   TrendingUp,
+  ClipboardCheck,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -40,6 +41,7 @@ interface DailyReportTabProps {
   attendanceRecords: AttendanceRecord[];
   ldLogs: LDLogEntry[];
   staffList: Staff[];
+  onNavigateToChecklist?: () => void;
 }
 
 export const DailyReportTab: React.FC<DailyReportTabProps> = ({
@@ -48,6 +50,7 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
   attendanceRecords,
   ldLogs,
   staffList,
+  onNavigateToChecklist,
 }) => {
   const [showPrintModal, setShowPrintModal] = useState(false);
 
@@ -577,6 +580,18 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {onNavigateToChecklist && (
+                  <button
+                    onClick={() => {
+                      setShowPrintModal(false);
+                      onNavigateToChecklist();
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-emerald-950"
+                  >
+                    <ClipboardCheck className="w-4 h-4" />
+                    <span>Go to Checklist</span>
+                  </button>
+                )}
                 <button
                   onClick={handlePrint}
                   className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-purple-950"

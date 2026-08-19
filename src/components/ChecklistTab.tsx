@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DailyChecklist } from '../types';
 import { getChecklistForDate, saveChecklistForDate } from '../utils/storage';
 import { CHECKLIST_ITEMS } from '../data/checklist';
-import { Save, Printer, ClipboardCheck, Edit3 } from 'lucide-react';
+import { Save, Printer, ClipboardCheck, Edit3, FileDown } from 'lucide-react';
 
 interface ChecklistTabProps {
   dateStr: string;
@@ -58,6 +58,20 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
 
   return (
     <div className="flex flex-col gap-6">
+      <style type="text/css">
+        {`
+          @media print {
+            @page { 
+              size: A4 portrait; 
+              margin: 10mm; 
+            }
+            body { 
+              -webkit-print-color-adjust: exact; 
+              print-color-adjust: exact; 
+            }
+          }
+        `}
+      </style>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 print:hidden">
         <div>
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -77,6 +91,14 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
             <span>Print</span>
           </button>
           <button
+            onClick={handlePrint}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-blue-900/60 hover:bg-blue-800/80 text-blue-200 border border-blue-700/50 px-4 py-2 rounded-lg font-semibold transition-colors"
+            title="Download as PDF using Print dialog"
+          >
+            <FileDown className="w-4 h-4" />
+            <span>PDF</span>
+          </button>
+          <button
             onClick={handleSave}
             className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors ${
               isSaved
@@ -91,18 +113,18 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
       </div>
 
       <div className="lounge-card rounded-xl border border-slate-800 overflow-hidden bg-[#0f172a] print:border-none print:shadow-none print:bg-white print:text-black">
-        <div className="hidden print:block p-8 border-b-2 border-slate-900 pb-4 mb-6">
-          <h1 className="text-3xl font-black text-center text-slate-900 uppercase tracking-tight">
+        <div className="hidden print:block p-4 border-b-2 border-slate-900 pb-2 mb-4">
+          <h1 className="text-2xl font-black text-center text-slate-900 uppercase tracking-tight">
             Checklist (Closing Time)
           </h1>
-          <h2 className="text-xl font-bold text-center text-slate-700 mt-2">
+          <h2 className="text-lg font-bold text-center text-slate-700 mt-1">
             First Floor / Second Floor
           </h2>
-          <div className="mt-6 flex justify-between items-end border-b border-slate-300 pb-2">
+          <div className="mt-4 flex justify-between items-end border-b border-slate-300 pb-1">
             <div className="text-sm font-bold text-slate-600">
-              DATE: <span className="text-black ml-2 text-lg">{dateStr}</span>
+              DATE: <span className="text-black ml-2 text-base">{dateStr}</span>
             </div>
-            <div className="text-xs text-slate-500 font-mono">
+            <div className="text-[10px] text-slate-500 font-mono">
               Generated via Lounge Management System
             </div>
           </div>
@@ -113,10 +135,10 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
             <table className="w-full text-left border-collapse print:border print:border-black">
               <thead>
                 <tr className="border-b border-slate-700/50 print:border-black print:bg-slate-100">
-                  <th className="py-3 px-4 font-bold text-slate-300 print:text-black print:border-r print:border-black print:py-2">
+                  <th className="py-3 px-4 font-bold text-slate-300 print:text-black print:border-r print:border-black print:py-1 print:text-sm">
                     Task Description
                   </th>
-                  <th className="py-3 px-4 font-bold text-slate-300 text-center w-32 print:text-black print:py-2">
+                  <th className="py-3 px-4 font-bold text-slate-300 text-center w-32 print:text-black print:py-1 print:text-sm">
                     Status
                   </th>
                 </tr>
@@ -129,17 +151,17 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
                       key={index} 
                       className={`group transition-colors print:border-b print:border-black ${isChecked ? 'bg-purple-900/10' : 'hover:bg-slate-800/30'}`}
                     >
-                      <td className="py-3 px-4 print:py-2 print:border-r print:border-black">
+                      <td className="py-3 px-4 print:py-[5px] print:border-r print:border-black">
                         <label 
                           htmlFor={`check-${index}`}
                           className="flex items-center gap-3 cursor-pointer select-none"
                         >
-                          <span className={`text-sm sm:text-base print:text-sm font-medium ${isChecked ? 'text-purple-300 print:text-black' : 'text-slate-300 print:text-slate-700'}`}>
+                          <span className={`text-sm sm:text-base print:text-xs font-medium ${isChecked ? 'text-purple-300 print:text-black' : 'text-slate-300 print:text-slate-700'}`}>
                             {item}
                           </span>
                         </label>
                       </td>
-                      <td className="py-3 px-4 text-center print:py-2">
+                      <td className="py-3 px-4 text-center print:py-[5px]">
                         <div className="flex justify-center print:hidden">
                           <input
                             type="checkbox"
@@ -151,9 +173,9 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
                         </div>
                         <div className="hidden print:flex justify-center items-center h-full">
                           {isChecked ? (
-                            <span className="text-xl font-bold text-black">✓</span>
+                            <span className="text-lg font-bold text-black leading-none">✓</span>
                           ) : (
-                            <span className="text-slate-300">-</span>
+                            <span className="text-slate-300 leading-none">-</span>
                           )}
                         </div>
                       </td>
@@ -164,10 +186,10 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
             </table>
           </div>
 
-          <div className="mt-8 print:mt-6 print:border print:border-black">
-            <div className="flex items-center gap-2 mb-3 print:bg-slate-100 print:border-b print:border-black print:p-2 print:mb-0">
+          <div className="mt-8 print:mt-4 print:border print:border-black">
+            <div className="flex items-center gap-2 mb-3 print:bg-slate-100 print:border-b print:border-black print:p-1 print:mb-0">
               <Edit3 className="w-5 h-5 text-purple-400 print:hidden" />
-              <h3 className="text-lg font-bold text-slate-200 print:text-black print:text-center print:w-full print:uppercase">Remarks</h3>
+              <h3 className="text-lg font-bold text-slate-200 print:text-black print:text-center print:w-full print:text-sm print:uppercase">Remarks</h3>
             </div>
             <textarea
               value={checklist.remarks}
@@ -175,7 +197,7 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
               placeholder="Add any remarks or issues noticed during closing..."
               className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-4 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 resize-y min-h-[120px] print:hidden"
             />
-            <div className="hidden print:block p-4 min-h-[100px] text-black whitespace-pre-wrap">
+            <div className="hidden print:block p-3 min-h-[60px] text-black whitespace-pre-wrap text-sm">
               {checklist.remarks || <span className="text-transparent">.</span>}
             </div>
           </div>

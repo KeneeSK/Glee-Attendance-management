@@ -213,6 +213,7 @@ export default function App() {
             attendanceRecords={attendanceRecords}
             ldLogs={ldLogs}
             staffList={staffList}
+            onNavigateToChecklist={() => setCurrentTab('checklist')}
           />
         )}
         {currentTab === 'checklist' && currentUser.permissions.canAccessReport && (
