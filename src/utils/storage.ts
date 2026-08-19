@@ -468,7 +468,7 @@ export function exportDatabaseJSON(): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `Lounge_Database_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+  link.download = `Glee_Angels_Database_Backup_${new Date().toISOString().slice(0, 10)}.json`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -554,7 +554,7 @@ export function downloadDailyReportCSV(dateStr: string) {
   const lines: string[] = [];
 
   // Title section
-  lines.push(`"=== Live Music Lounge Daily Report (${dateStr}) ==="`);
+  lines.push(`"=== GLEE ANGELS Daily Report (${dateStr}) ==="`);
   lines.push(`"Report Generated At: ${new Date().toLocaleString('en-US')}"`);
   lines.push('');
 
@@ -630,7 +630,7 @@ export function downloadDailyReportCSV(dateStr: string) {
   
   const link = document.createElement('a');
   link.setAttribute('href', url);
-  link.setAttribute('download', `Lounge_Daily_Report_${dateStr}.csv`);
+  link.setAttribute('download', `GLEE_ANGELS_Daily_Report_${dateStr}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

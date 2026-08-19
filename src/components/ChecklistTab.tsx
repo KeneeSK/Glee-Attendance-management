@@ -299,7 +299,7 @@ export function ChecklistTab({ dateStr, lastSyncTime }: ChecklistTabProps) {
                     DATE: <span className="text-black ml-2 text-base">{dateStr}</span>
                   </div>
                   <div className="text-[10px] text-slate-500 font-mono">
-                    Generated via Lounge Management System
+                    Generated via GLEE ANGELS Management System
                   </div>
                 </div>
               </div>
@@ -351,7 +351,7 @@ export function ChecklistTab({ dateStr, lastSyncTime }: ChecklistTabProps) {
               DATE: <span className="text-black ml-2 text-base">{dateStr}</span>
             </div>
             <div className="text-[10px] text-black font-mono">
-              Generated via Lounge Management System
+              Generated via GLEE ANGELS Management System
             </div>
           </div>
         </div>

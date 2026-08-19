@@ -79,7 +79,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase bg-purple-950/80 text-purple-300 border border-purple-500/30 rounded">
-                  LIVE MUSIC LOUNGE
+                  GLEE ANGELS
                 </span>
                 <span className="text-xs text-slate-400 flex items-center gap-1">
                   <Clock className="w-3 h-3 text-cyan-400" />

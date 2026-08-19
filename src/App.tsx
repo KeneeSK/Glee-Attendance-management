@@ -248,7 +248,7 @@ export default function App() {
       <footer className="border-t border-slate-900 bg-[#080a12] py-4 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>
-            🎵 Live Music Lounge Staff & LD Electronic Management System
+            🎵 GLEE ANGELS Staff & LD Electronic Management System
           </span>
           <span className="text-[11px] text-slate-600">
             Data is securely auto-saved to browser LocalStorage.

@@ -52,7 +52,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onUnlock }) => {
             <Lock className="w-8 h-8 text-white" />
           </div>
           <div className="inline-block px-3 py-1 rounded-full bg-purple-950/50 border border-purple-500/30 text-[10px] font-bold uppercase tracking-widest text-purple-300">
-            Glee Angels Music Lounge
+            Glee Angels
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight text-white uppercase">
             Admin Portal

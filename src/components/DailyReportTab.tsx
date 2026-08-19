@@ -152,7 +152,7 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <span className="px-2 py-0.5 text-[10px] font-bold bg-pink-950/80 text-pink-300 border border-pink-800/60 rounded">
-              LOUNGE DAILY REPORT
+              GLEE ANGELS DAILY REPORT
             </span>
             <span className="text-xs text-slate-400 flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5 text-pink-400" />
@@ -616,7 +616,7 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                   <div className="flex items-center gap-2">
                     <Wine className="w-6 h-6 text-purple-700" />
                     <h1 className="text-xl font-extrabold tracking-wider text-slate-900 uppercase">
-                      GLEE ANGELS MUSIC LOUNGE
+                      GLEE ANGELS
                     </h1>
                   </div>
                   <p className="text-xs text-slate-600 mt-1 font-semibold">
