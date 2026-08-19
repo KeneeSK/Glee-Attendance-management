@@ -2,15 +2,6 @@
 import { db } from '../lib/firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { calculateWorkingTime } from './time';
-
-async function syncToFirestore(collectionName: string, data: any) {
-  try {
-    await setDoc(doc(db, 'loungeData', collectionName), { data });
-  } catch (err) {
-    console.warn('Firestore sync warning:', err);
-  }
-}
-
 import { Staff, AttendanceRecord, LDLogEntry, AdminUser, DailyChecklist } from '../types';
 import { DEFAULT_STAFF_LIST, PRESET_TABLES, generateInitialAttendance, generateInitialLDLogs, getTodayDateString } from './initialData';
 
@@ -22,6 +13,144 @@ const KEYS = {
   ADMINS: 'lounge_admins_v2',
   CHECKLISTS: 'lounge_checklists_v2',
 };
+
+export function normalizeDateStr(d: string): string {
+  if (!d) return '';
+  const trimmed = d.split('T')[0].trim();
+  const parts = trimmed.split(/[-/.]/);
+  if (parts.length === 3) {
+    const y = parts[0];
+    const m = parts[1].padStart(2, '0');
+    const day = parts[2].padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+  return trimmed;
+}
+
+export function isAttendanceRecordPopulated(r: AttendanceRecord): boolean {
+  if (!r) return false;
+  return Boolean(
+    (r.checkInTime && r.checkInTime.trim() !== '') ||
+    (r.checkOutTime && r.checkOutTime.trim() !== '') ||
+    r.isLate ||
+    r.isAbsent ||
+    r.isDayOff ||
+    r.isSuspended ||
+    (r.note && r.note.trim() !== '')
+  );
+}
+
+export function mergeAttendanceRecords(listA: AttendanceRecord[], listB: AttendanceRecord[]): AttendanceRecord[] {
+  const map = new Map<string, AttendanceRecord>();
+
+  const processRecord = (r: AttendanceRecord) => {
+    if (!r || !r.staffId) return;
+    const normDate = normalizeDateStr(r.date);
+    const key = `${normDate}_${r.staffId}`;
+    const normalizedRec: AttendanceRecord = {
+      ...r,
+      date: normDate,
+      id: r.id || `att_${normDate}_${r.staffId}`,
+    };
+    const existing = map.get(key);
+
+    if (!existing) {
+      map.set(key, normalizedRec);
+      return;
+    }
+
+    const existingPopulated = isAttendanceRecordPopulated(existing);
+    const newPopulated = isAttendanceRecordPopulated(normalizedRec);
+
+    if (newPopulated && !existingPopulated) {
+      map.set(key, { ...existing, ...normalizedRec });
+    } else if (!newPopulated && existingPopulated) {
+      map.set(key, { ...normalizedRec, ...existing, staffName: normalizedRec.staffName || existing.staffName });
+    } else if (newPopulated && existingPopulated) {
+      const existingTime = existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0;
+      const newTime = normalizedRec.updatedAt ? new Date(normalizedRec.updatedAt).getTime() : 0;
+      if (newTime >= existingTime) {
+        map.set(key, {
+          ...existing,
+          ...normalizedRec,
+          checkInTime: normalizedRec.checkInTime || existing.checkInTime,
+          checkOutTime: normalizedRec.checkOutTime || existing.checkOutTime,
+          note: normalizedRec.note || existing.note,
+        });
+      } else {
+        map.set(key, {
+          ...normalizedRec,
+          ...existing,
+          checkInTime: existing.checkInTime || normalizedRec.checkInTime,
+          checkOutTime: existing.checkOutTime || normalizedRec.checkOutTime,
+          note: existing.note || normalizedRec.note,
+        });
+      }
+    } else {
+      map.set(key, { ...existing, ...normalizedRec });
+    }
+  };
+
+  if (Array.isArray(listA)) listA.forEach(processRecord);
+  if (Array.isArray(listB)) listB.forEach(processRecord);
+
+  return Array.from(map.values());
+}
+
+export function mergeLDLogs(listA: LDLogEntry[], listB: LDLogEntry[]): LDLogEntry[] {
+  const map = new Map<string, LDLogEntry>();
+  const addLog = (log: LDLogEntry) => {
+    if (!log) return;
+    const normDate = normalizeDateStr(log.date);
+    const id = log.id || `ld_${normDate}_${log.staffId}_${log.timestamp}_${log.tableNo}`;
+    if (!map.has(id)) {
+      map.set(id, { ...log, id, date: normDate });
+    }
+  };
+  if (Array.isArray(listA)) listA.forEach(addLog);
+  if (Array.isArray(listB)) listB.forEach(addLog);
+  return Array.from(map.values());
+}
+
+async function syncToFirestore(collectionName: string, data: any) {
+  try {
+    if (collectionName === 'attendance' && Array.isArray(data)) {
+      try {
+        const snap = await getDoc(doc(db, 'loungeData', 'attendance'));
+        if (snap.exists()) {
+          const serverData = snap.data()?.data;
+          if (Array.isArray(serverData)) {
+            const merged = mergeAttendanceRecords(serverData, data);
+            await setDoc(doc(db, 'loungeData', 'attendance'), { data: merged, updatedAt: new Date().toISOString() });
+            localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(merged));
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Firestore attendance merge check:', e);
+      }
+    } else if (collectionName === 'ldLogs' && Array.isArray(data)) {
+      try {
+        const snap = await getDoc(doc(db, 'loungeData', 'ldLogs'));
+        if (snap.exists()) {
+          const serverData = snap.data()?.data;
+          if (Array.isArray(serverData)) {
+            const merged = mergeLDLogs(serverData, data);
+            await setDoc(doc(db, 'loungeData', 'ldLogs'), { data: merged, updatedAt: new Date().toISOString() });
+            localStorage.setItem(KEYS.LD_LOGS, JSON.stringify(merged));
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Firestore ldLogs merge check:', e);
+      }
+    }
+
+    await setDoc(doc(db, 'loungeData', collectionName), { data, updatedAt: new Date().toISOString() });
+  } catch (err) {
+    console.warn('Firestore sync warning for ' + collectionName + ':', err);
+  }
+}
 
 const DEFAULT_ADMIN: AdminUser = {
   id: 'adm-01',
@@ -169,15 +298,57 @@ export function saveStaffList(staffList: Staff[]): void {
 
 export function loadAllAttendance(): AttendanceRecord[] {
   try {
+    let allRecords: AttendanceRecord[] = [];
+
+    // 1. Primary key
     const data = localStorage.getItem(KEYS.ATTENDANCE);
-    if (!data) {
+    if (data) {
+      try {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed)) {
+          allRecords = mergeAttendanceRecords(allRecords, parsed);
+        }
+      } catch (e) {
+        console.error('Parse primary attendance error:', e);
+      }
+    }
+
+    // 2. Auto backup
+    const autoBackup = localStorage.getItem('lounge_auto_backup_v1');
+    if (autoBackup) {
+      try {
+        const parsedBackup = JSON.parse(autoBackup);
+        if (Array.isArray(parsedBackup?.attendance)) {
+          allRecords = mergeAttendanceRecords(allRecords, parsedBackup.attendance);
+        }
+      } catch (e) {
+        console.error('Parse auto backup attendance error:', e);
+      }
+    }
+
+    // 3. Legacy v1 key
+    const v1Data = localStorage.getItem('lounge_attendance_v1');
+    if (v1Data) {
+      try {
+        const parsedV1 = JSON.parse(v1Data);
+        if (Array.isArray(parsedV1)) {
+          allRecords = mergeAttendanceRecords(allRecords, parsedV1);
+        }
+      } catch (e) {
+        console.error('Parse v1 attendance error:', e);
+      }
+    }
+
+    // If completely empty, generate today's initial skeleton
+    if (allRecords.length === 0) {
       const today = getTodayDateString();
       const staff = loadStaffList();
       const initial = generateInitialAttendance(today, staff);
       localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(initial));
       return initial;
     }
-    return JSON.parse(data);
+
+    return allRecords;
   } catch (err) {
     console.error('Failed to load attendance:', err);
     return [];
@@ -194,85 +365,133 @@ export function saveAllAttendance(records: AttendanceRecord[]): void {
 }
 
 export function getAttendanceForDate(dateStr: string): AttendanceRecord[] {
+  const normTargetDate = normalizeDateStr(dateStr);
   const all = loadAllAttendance();
-  const dateRecords = all.filter((r) => r.date === dateStr);
+
+  // Find existing records matching this target date (handling multiple date string variations)
+  const dateRecords = all.filter((r) => {
+    const normRecordDate = normalizeDateStr(r.date);
+    return normRecordDate === normTargetDate || r.id?.startsWith(`att_${normTargetDate}_`);
+  });
+
   const activeStaff = loadStaffList().filter((s) => s.active);
   const activeStaffMap = new Map<string, Staff>(activeStaff.map((s) => [s.id, s]));
 
-  let updated = false;
   const resultMap = new Map<string, AttendanceRecord>();
 
-  // Filter existing records for this date to only keep active staff members
+  // Filter existing records for this date
   dateRecords.forEach((rec) => {
     if (activeStaffMap.has(rec.staffId)) {
-      resultMap.set(rec.staffId, rec);
+      resultMap.set(rec.staffId, {
+        ...rec,
+        date: normTargetDate,
+        staffName: activeStaffMap.get(rec.staffId)!.name,
+      });
     }
   });
 
-  // Ensure every active staff member has a valid record for this date
-  activeStaff.forEach((staff) => {
-    if (!resultMap.has(staff.id)) {
-      const newRec: AttendanceRecord = {
-        id: `att_${dateStr}_${staff.id}`,
-        date: dateStr,
-        staffId: staff.id,
-        staffName: staff.name,
-        schedule: staff.defaultSchedule,
-        checkInTime: '',
-        checkOutTime: '',
-        isLate: false,
-        isAbsent: false,
-        isDayOff: false,
-        isSuspended: false,
-        note: '',
-        updatedAt: new Date().toISOString(),
-      };
-      resultMap.set(staff.id, newRec);
-      updated = true;
-    } else {
-      // Just update the staffName to keep it in sync with Staff Manager changes,
-      // but DO NOT revert the 'schedule' which might have been manually changed!
-      const existing = resultMap.get(staff.id)!;
-      if (existing.staffName !== staff.name) {
-        existing.staffName = staff.name;
-        updated = true;
-      }
+  // Provide transient default records for any active staff not yet entered for this date
+  const currentActiveDateRecords = activeStaff.map((staff) => {
+    if (resultMap.has(staff.id)) {
+      return resultMap.get(staff.id)!;
     }
+    return {
+      id: `att_${normTargetDate}_${staff.id}`,
+      date: normTargetDate,
+      staffId: staff.id,
+      staffName: staff.name,
+      schedule: staff.defaultSchedule,
+      checkInTime: '',
+      checkOutTime: '',
+      isLate: false,
+      isAbsent: false,
+      isDayOff: false,
+      isSuspended: false,
+      note: '',
+      updatedAt: new Date().toISOString(),
+    };
   });
-
-  const otherDatesRecords = all.filter((r) => r.date !== dateStr);
-  const currentActiveDateRecords = activeStaff.map((staff) => resultMap.get(staff.id)!);
-  const cleanedAll = [...otherDatesRecords, ...currentActiveDateRecords];
-
-  if (updated || cleanedAll.length !== all.length) {
-    saveAllAttendance(cleanedAll);
-  }
 
   return currentActiveDateRecords;
 }
 
 export function updateAttendanceRecord(updatedRecord: AttendanceRecord): void {
+  const normDate = normalizeDateStr(updatedRecord.date);
+  const normalized: AttendanceRecord = {
+    ...updatedRecord,
+    date: normDate,
+    id: updatedRecord.id || `att_${normDate}_${updatedRecord.staffId}`,
+    updatedAt: new Date().toISOString(),
+  };
+
   const all = loadAllAttendance();
-  const index = all.findIndex((r) => r.id === updatedRecord.id);
+  const index = all.findIndex(
+    (r) => r.id === normalized.id || (normalizeDateStr(r.date) === normDate && r.staffId === normalized.staffId)
+  );
+
+  let updatedAll: AttendanceRecord[];
   if (index >= 0) {
-    all[index] = { ...updatedRecord, updatedAt: new Date().toISOString() };
+    updatedAll = [...all];
+    updatedAll[index] = normalized;
   } else {
-    all.push({ ...updatedRecord, updatedAt: new Date().toISOString() });
+    updatedAll = [...all, normalized];
   }
-  saveAllAttendance(all);
+
+  saveAllAttendance(updatedAll);
 }
 
 export function loadAllLDLogs(): LDLogEntry[] {
   try {
+    let allLogs: LDLogEntry[] = [];
+
+    // 1. Primary key
     const data = localStorage.getItem(KEYS.LD_LOGS);
-    if (!data) {
+    if (data) {
+      try {
+        const parsed = JSON.parse(data);
+        if (Array.isArray(parsed)) {
+          allLogs = mergeLDLogs(allLogs, parsed);
+        }
+      } catch (e) {
+        console.error('Parse primary LD logs error:', e);
+      }
+    }
+
+    // 2. Auto backup
+    const autoBackup = localStorage.getItem('lounge_auto_backup_v1');
+    if (autoBackup) {
+      try {
+        const parsedBackup = JSON.parse(autoBackup);
+        if (Array.isArray(parsedBackup?.ldLogs)) {
+          allLogs = mergeLDLogs(allLogs, parsedBackup.ldLogs);
+        }
+      } catch (e) {
+        console.error('Parse backup LD logs error:', e);
+      }
+    }
+
+    // 3. Legacy v1 key
+    const v1Data = localStorage.getItem('lounge_ld_logs_v1');
+    if (v1Data) {
+      try {
+        const parsedV1 = JSON.parse(v1Data);
+        if (Array.isArray(parsedV1)) {
+          allLogs = mergeLDLogs(allLogs, parsedV1);
+        }
+      } catch (e) {
+        console.error('Parse v1 LD logs error:', e);
+      }
+    }
+
+    if (allLogs.length === 0) {
       const today = getTodayDateString();
       const staff = loadStaffList();
       const initial = generateInitialLDLogs(today, staff);
       localStorage.setItem(KEYS.LD_LOGS, JSON.stringify(initial));
       return initial;
     }
-    return JSON.parse(data);
+
+    return allLogs;
   } catch (err) {
     console.error('Failed to load LD logs:', err);
     return [];
@@ -288,30 +507,7 @@ export function saveAllLDLogs(logs: LDLogEntry[]): void {
   }
 }
 
-function mergeClientAndServerById<T extends { id: string }>(localArr: T[], serverArr: T[]): T[] {
-  const map = new Map<string, T>();
-  if (Array.isArray(localArr)) {
-    for (const item of localArr) {
-      if (item && item.id) map.set(item.id, item);
-    }
-  }
-  if (Array.isArray(serverArr)) {
-    for (const item of serverArr) {
-      if (item && item.id) {
-        const existing = map.get(item.id);
-        if (!existing) {
-          map.set(item.id, item);
-        } else {
-          map.set(item.id, { ...existing, ...item });
-        }
-      }
-    }
-  }
-  return Array.from(map.values());
-}
-
-// Fetch database from Express server API and hydrate client state
-
+// Fetch database from Firestore and smart merge client state
 export async function fetchServerDatabase(): Promise<boolean> {
   try {
     const collections = [
@@ -328,7 +524,28 @@ export async function fetchServerDatabase(): Promise<boolean> {
       if (snapshot.exists()) {
         const data = snapshot.data().data;
         if (Array.isArray(data)) {
-          localStorage.setItem(c.key, JSON.stringify(data));
+          const currentData = localStorage.getItem(c.key);
+          let mergedData = data;
+          if (currentData) {
+            try {
+              const localParsed = JSON.parse(currentData);
+              if (Array.isArray(localParsed)) {
+                if (c.id === 'attendance') {
+                  mergedData = mergeAttendanceRecords(localParsed, data);
+                } else if (c.id === 'ldLogs') {
+                  mergedData = mergeLDLogs(localParsed, data);
+                } else if (c.id === 'checklists') {
+                  const map = new Map<string, DailyChecklist>();
+                  localParsed.forEach((item: DailyChecklist) => item?.date && map.set(item.date, item));
+                  data.forEach((item: DailyChecklist) => item?.date && map.set(item.date, item));
+                  mergedData = Array.from(map.values());
+                }
+              }
+            } catch (e) {
+              console.warn('Merge local error:', e);
+            }
+          }
+          localStorage.setItem(c.key, JSON.stringify(mergedData));
           fetched = true;
         }
       }
@@ -339,7 +556,6 @@ export async function fetchServerDatabase(): Promise<boolean> {
   }
   return false;
 }
-
 
 export function subscribeToServerDatabase(onUpdate: () => void): () => void {
   const collections = [
@@ -353,43 +569,34 @@ export function subscribeToServerDatabase(onUpdate: () => void): () => void {
 
   const unsubscribes = collections.map(c => {
     return onSnapshot(doc(db, 'loungeData', c.id), (snapshot) => {
-      // Remove the hasPendingWrites return to ensure we ALWAYS sync state correctly
       if (snapshot.exists()) {
         const data = snapshot.data().data;
         if (Array.isArray(data)) {
           const currentData = localStorage.getItem(c.key);
-          const newDataStr = JSON.stringify(data);
-          
-          // Simple deep comparison to prevent infinite loops even if Firestore reorders keys
-          const isDifferent = (() => {
-            if (!currentData) return true;
-            try {
-              const parsedCurrent = JSON.parse(currentData);
-              // Compare stringified versions of sorted representations, or just stringify the parsed
-              // A quick heuristic: if lengths differ greatly, they are different.
-              // For a robust check without a library, we can just assume if the stringified versions match, they are identical.
-              // If not, we do a JSON.stringify(parsedCurrent) to normalize spacing.
-              if (JSON.stringify(parsedCurrent) === newDataStr) return false;
-              
-              // To handle key reordering:
-              const normalize = (obj: any): any => {
-                if (Array.isArray(obj)) return obj.map(normalize);
-                if (obj !== null && typeof obj === 'object') {
-                  return Object.keys(obj).sort().reduce((acc, key) => {
-                    acc[key] = normalize(obj[key]);
-                    return acc;
-                  }, {} as any);
-                }
-                return obj;
-              };
-              
-              return JSON.stringify(normalize(parsedCurrent)) !== JSON.stringify(normalize(data));
-            } catch (e) {
-              return true;
-            }
-          })();
+          let finalData = data;
 
-          if (isDifferent) {
+          if (currentData) {
+            try {
+              const localParsed = JSON.parse(currentData);
+              if (Array.isArray(localParsed)) {
+                if (c.id === 'attendance') {
+                  finalData = mergeAttendanceRecords(localParsed, data);
+                } else if (c.id === 'ldLogs') {
+                  finalData = mergeLDLogs(localParsed, data);
+                } else if (c.id === 'checklists') {
+                  const map = new Map<string, DailyChecklist>();
+                  localParsed.forEach((item: DailyChecklist) => item?.date && map.set(item.date, item));
+                  data.forEach((item: DailyChecklist) => item?.date && map.set(item.date, item));
+                  finalData = Array.from(map.values());
+                }
+              }
+            } catch (e) {
+              console.warn('Subscription merge error:', e);
+            }
+          }
+
+          const newDataStr = JSON.stringify(finalData);
+          if (currentData !== newDataStr) {
             localStorage.setItem(c.key, newDataStr);
             onUpdate();
           }

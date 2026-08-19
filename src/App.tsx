@@ -75,6 +75,11 @@ export default function App() {
   }, [selectedDate]);
 
   useEffect(() => {
+    // Fetch and smart-merge with Firestore immediately on load
+    fetchServerDatabase().then(() => {
+      refreshData();
+    });
+
     if (isAuthenticated) {
       refreshData();
       // Listen to real-time updates from Firestore securely
@@ -83,9 +88,6 @@ export default function App() {
       });
 
       return () => unsubscribe();
-    } else {
-      // Unconditionally fetch once to get latest admins (for login)
-      fetchServerDatabase();
     }
   }, [refreshData, isAuthenticated]);
 
