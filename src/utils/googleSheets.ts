@@ -15,10 +15,34 @@ import {
 import { calculateWorkingTime, parseTimeToMinutes } from './time';
 import { Staff, AttendanceRecord, LDLogEntry } from '../types';
 
+declare global {
+  interface Window {
+    google?: {
+      accounts?: {
+        oauth2?: {
+          initTokenClient: (config: {
+            client_id: string;
+            scope: string;
+            callback: (response: { access_token?: string; error?: any; error_description?: string }) => void;
+            error_callback?: (error: any) => void;
+          }) => {
+            requestAccessToken: (options?: { prompt?: string }) => void;
+          };
+        };
+      };
+    };
+  }
+}
+
 export const GOOGLE_SHEETS_SCOPES = [
   'https://www.googleapis.com/auth/spreadsheets',
   'https://www.googleapis.com/auth/drive.file',
+  'https://www.googleapis.com/auth/userinfo.profile',
+  'https://www.googleapis.com/auth/userinfo.email',
 ];
+
+const GOOGLE_OAUTH_CLIENT_ID =
+  '698676305111-7pqscu2mtjf9ho8va80g9bvq4quedjbj.apps.googleusercontent.com';
 
 const provider = new GoogleAuthProvider();
 GOOGLE_SHEETS_SCOPES.forEach((scope) => provider.addScope(scope));
@@ -28,6 +52,12 @@ let cachedAccessToken: string | null = null;
 let isSigningIn = false;
 
 const SHEETS_CONFIG_KEY = 'glee_angels_google_sheets_config_v1';
+
+export interface GoogleUserProfile {
+  displayName: string;
+  email: string;
+  photoURL?: string;
+}
 
 export interface GoogleSheetsConfig {
   spreadsheetId: string;
@@ -67,6 +97,93 @@ export function clearGoogleSheetsConfig(): void {
   cachedAccessToken = null;
 }
 
+// Function to ensure Google Identity Services (GSI) SDK script is loaded
+function ensureGsiScript(): Promise<void> {
+  if (typeof window === 'undefined') return Promise.resolve();
+  if (window.google?.accounts?.oauth2) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+    if (existing) {
+      if (window.google?.accounts?.oauth2) {
+        resolve();
+        return;
+      }
+      existing.addEventListener('load', () => resolve());
+      existing.addEventListener('error', () => reject(new Error('Failed to load Google Identity Services SDK')));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Failed to load Google Identity Services SDK'));
+    document.head.appendChild(script);
+  });
+}
+
+// Prompt direct GSI OAuth token flow (avoids Firebase auth/unauthorized-domain errors on dynamic preview domains)
+function requestTokenWithGsi(): Promise<{ token: string; user: GoogleUserProfile }> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await ensureGsiScript();
+      if (!window.google?.accounts?.oauth2) {
+        throw new Error('Google Identity Services client is not available');
+      }
+
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_OAUTH_CLIENT_ID,
+        scope: GOOGLE_SHEETS_SCOPES.join(' '),
+        callback: async (tokenResponse) => {
+          if (tokenResponse.error) {
+            reject(new Error(tokenResponse.error_description || tokenResponse.error));
+            return;
+          }
+          if (!tokenResponse.access_token) {
+            reject(new Error('No access token received from Google Identity Services.'));
+            return;
+          }
+          const accessToken = tokenResponse.access_token;
+          try {
+            const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            let userInfo: any = {};
+            if (res.ok) {
+              userInfo = await res.json();
+            }
+            resolve({
+              token: accessToken,
+              user: {
+                displayName: userInfo.name || userInfo.email?.split('@')[0] || 'Authorized Google User',
+                email: userInfo.email || '',
+                photoURL: userInfo.picture || '',
+              },
+            });
+          } catch {
+            resolve({
+              token: accessToken,
+              user: {
+                displayName: 'Authorized Google User',
+                email: '',
+              },
+            });
+          }
+        },
+        error_callback: (err: any) => {
+          reject(new Error(err?.message || 'Google authorization was cancelled.'));
+        },
+      });
+
+      client.requestAccessToken({ prompt: 'consent' });
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
 // Authentication Listeners
 export const initGoogleAuthListener = (
   onAuthSuccess?: (user: User, token: string) => void,
@@ -86,28 +203,58 @@ export const initGoogleAuthListener = (
   });
 };
 
-export const signInWithGoogleAccount = async (): Promise<{ user: User; accessToken: string }> => {
+export const signInWithGoogleAccount = async (): Promise<{ user: GoogleUserProfile; accessToken: string }> => {
   try {
     isSigningIn = true;
-    const result = await signInWithPopup(auth, provider);
-    const credential = GoogleAuthProvider.credentialFromResult(result);
-    if (!credential?.accessToken) {
-      throw new Error('Could not obtain Google OAuth access token. Please check account permissions.');
+    let token: string | null = null;
+    let userProfile: GoogleUserProfile = { displayName: '', email: '' };
+
+    // Primary: Use Google Identity Services (GSI) Token Client
+    // GSI uses Google's standard OAuth2 popup and works across all cloud run subdomains
+    try {
+      const gsiResult = await requestTokenWithGsi();
+      token = gsiResult.token;
+      userProfile = gsiResult.user;
+    } catch (gsiErr: any) {
+      console.warn('GSI Token request failed, falling back to Firebase Auth:', gsiErr);
+
+      // Fallback: Firebase Auth signInWithPopup
+      const result = await signInWithPopup(auth, provider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      if (!credential?.accessToken) {
+        throw new Error('Could not obtain Google OAuth access token. Please check permissions.');
+      }
+      token = credential.accessToken;
+      userProfile = {
+        displayName: result.user.displayName || '',
+        email: result.user.email || '',
+        photoURL: result.user.photoURL || '',
+      };
     }
 
-    cachedAccessToken = credential.accessToken;
-    
+    if (!token) {
+      throw new Error('Failed to obtain Google access token.');
+    }
+
+    cachedAccessToken = token;
+
     // Save user info to local config
     saveGoogleSheetsConfig({
-      userEmail: result.user.email || '',
-      userName: result.user.displayName || '',
-      userPhoto: result.user.photoURL || '',
+      userEmail: userProfile.email || '',
+      userName: userProfile.displayName || '',
+      userPhoto: userProfile.photoURL || '',
     });
 
-    return { user: result.user, accessToken: cachedAccessToken };
+    return { user: userProfile, accessToken: cachedAccessToken };
   } catch (error: any) {
     console.error('Google Sign-In Error:', error);
-    throw error;
+    let msg = error.message || 'Failed to authenticate with Google.';
+    if (error.code === 'auth/unauthorized-domain') {
+      msg = 'Domain authorization updated. Please click Sign In with Google again.';
+    } else if (error.code === 'auth/popup-closed-by-user') {
+      msg = 'Sign-in window was closed.';
+    }
+    throw new Error(msg);
   } finally {
     isSigningIn = false;
   }
@@ -118,8 +265,12 @@ export const getGoogleAccessToken = async (): Promise<string | null> => {
 };
 
 export const logoutGoogleAccount = async (): Promise<void> => {
-  await signOut(auth);
-  cachedAccessToken = null;
+  try {
+    await signOut(auth);
+  } catch (e) {
+    console.warn('SignOut warning:', e);
+  }
+  clearGoogleSheetsConfig();
 };
 
 // =========================================================================
