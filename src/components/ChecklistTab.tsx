@@ -69,13 +69,13 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
   const rightColumnItems = CHECKLIST_ITEMS.slice(midPoint);
 
   const renderPrintTable = (items: string[], startIndex: number) => (
-    <table className="w-full text-left border-collapse border-2 border-slate-900 bg-white shadow-sm">
+    <table className="w-full text-left border-collapse border-2 border-slate-900 bg-white shadow-sm h-full">
       <thead>
         <tr className="bg-slate-100 border-b-2 border-slate-900">
-          <th className="font-bold text-slate-900 border-r-2 border-slate-900 py-1.5 px-3 text-[11px] uppercase tracking-wide">
+          <th className="font-bold text-slate-900 border-r-2 border-slate-900 py-2 px-3 text-xs uppercase tracking-wide w-auto">
             Task Description
           </th>
-          <th className="font-bold text-center text-slate-900 py-1.5 px-1 text-[11px] w-20 uppercase tracking-wide">
+          <th className="font-bold text-center text-slate-900 py-2 px-1 text-xs w-24 uppercase tracking-wide whitespace-nowrap">
             Status
           </th>
         </tr>
@@ -88,17 +88,17 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
           
           return (
             <tr key={actualIndex} className="border-b border-slate-400/50 hover:bg-slate-50 transition-colors">
-              <td className="py-1 px-3 border-r-2 border-slate-900 text-slate-900 font-semibold text-[11px] leading-snug">
+              <td className="py-1.5 px-3 border-r-2 border-slate-900 text-slate-900 font-bold text-[11px] sm:text-xs leading-snug">
                 {item}
               </td>
-              <td className="py-1 px-1 text-center align-middle">
+              <td className="py-1.5 px-1 text-center align-middle whitespace-nowrap">
                 {isNormal ? (
-                  <span className="inline-block px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-[10px] tracking-widest shadow-sm">
-                    정상
+                  <span className="inline-block px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-[10px] tracking-widest uppercase shadow-sm">
+                    Normal
                   </span>
                 ) : isAbnormal ? (
-                  <span className="inline-block px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-300 font-bold text-[10px] tracking-widest shadow-sm">
-                    비정상
+                  <span className="inline-block px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-300 font-bold text-[10px] tracking-widest uppercase shadow-sm">
+                    Abnormal
                   </span>
                 ) : (
                   <span className="text-slate-300 text-xs">-</span>
@@ -123,6 +123,11 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
             body { 
               -webkit-print-color-adjust: exact; 
               print-color-adjust: exact; 
+            }
+            .print-page-container {
+              height: 277mm; /* 297mm - 20mm margins */
+              display: flex !important;
+              flex-direction: column;
             }
           }
         `}
@@ -168,10 +173,10 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-700/50">
-                  <th className="py-3 px-4 font-bold text-slate-300">
+                  <th className="py-3 px-4 font-bold text-slate-300 w-auto">
                     Task Description
                   </th>
-                  <th className="py-3 px-4 font-bold text-slate-300 text-center w-32">
+                  <th className="py-3 px-4 font-bold text-slate-300 text-center w-56 whitespace-nowrap">
                     Status
                   </th>
                 </tr>
@@ -188,36 +193,36 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
                         isNormal ? 'bg-emerald-900/10' : isAbnormal ? 'bg-red-900/10' : 'hover:bg-slate-800/30'
                       }`}
                     >
-                      <td className="py-3 px-4">
+                      <td className="py-2 px-4">
                         <div className="flex items-center gap-3 select-none">
-                          <span className={`text-sm sm:text-base font-medium ${
+                          <span className={`text-sm sm:text-base font-bold whitespace-nowrap sm:whitespace-normal ${
                             isNormal ? 'text-emerald-400' : isAbnormal ? 'text-red-400' : 'text-slate-300'
                           }`}>
                             {item}
                           </span>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-2 px-4 text-center">
                         <div className="flex justify-center items-center gap-2">
                           <button
                             onClick={() => handleStatusChange(item, isNormal ? 'none' : 'normal')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border uppercase tracking-wider ${
                               isNormal
                                 ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-900/50'
                                 : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200'
                             }`}
                           >
-                            정상
+                            Normal
                           </button>
                           <button
                             onClick={() => handleStatusChange(item, isAbnormal ? 'none' : 'abnormal')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border uppercase tracking-wider ${
                               isAbnormal
                                 ? 'bg-red-600 text-white border-red-500 shadow-md shadow-red-900/50'
                                 : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200'
                             }`}
                           >
-                            비정상
+                            Abnormal
                           </button>
                         </div>
                       </td>
@@ -280,8 +285,8 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
             </div>
 
             {/* Document Body (Formatted for crisp paper output & PDF generation) */}
-            <div className="p-6 sm:p-8 bg-white text-slate-900 overflow-y-auto flex-1 font-sans">
-              <div className="border-b-2 border-slate-900 pb-2 mb-4">
+            <div className="p-6 sm:p-8 bg-white text-slate-900 overflow-y-auto flex-1 font-sans flex flex-col h-full">
+              <div className="border-b-2 border-slate-900 pb-2 mb-4 shrink-0">
                 <h1 className="text-2xl font-black text-center text-slate-900 uppercase tracking-tight">
                   Checklist (Closing Time)
                 </h1>
@@ -298,7 +303,7 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
                 </div>
               </div>
 
-              <div>
+              <div className="shrink-0">
                 <div className="flex gap-4">
                   <div className="flex-1">
                     {renderPrintTable(leftColumnItems, 0)}
@@ -309,13 +314,22 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
                 </div>
               </div>
 
-              <div className="mt-4 border-2 border-slate-900 rounded-lg overflow-hidden shadow-sm">
-                <div className="bg-slate-100 border-b-2 border-slate-900 p-1.5">
+              <div className="mt-4 border-2 border-slate-900 rounded-lg overflow-hidden shadow-sm flex-1 flex flex-col min-h-[120px]">
+                <div className="bg-slate-100 border-b-2 border-slate-900 p-1.5 shrink-0">
                   <h3 className="font-bold text-slate-900 text-center w-full text-xs uppercase tracking-widest">Remarks / Issues</h3>
                 </div>
-                <div className="p-4 min-h-[70px] text-slate-900 whitespace-pre-wrap text-xs bg-white font-medium leading-relaxed">
+                <div className="p-4 flex-1 text-slate-900 whitespace-pre-wrap text-sm bg-white font-medium leading-relaxed">
                   {checklist.remarks || <span className="text-transparent">.</span>}
                 </div>
+              </div>
+
+              <div className="mt-8 grid grid-cols-2 gap-16 px-12 shrink-0 pb-4">
+                 <div className="border-t-2 border-slate-900 pt-2 text-center">
+                   <span className="font-bold text-slate-900 uppercase tracking-widest text-sm">Staff Signature</span>
+                 </div>
+                 <div className="border-t-2 border-slate-900 pt-2 text-center">
+                   <span className="font-bold text-slate-900 uppercase tracking-widest text-sm">Manager Signature</span>
+                 </div>
               </div>
             </div>
           </div>
@@ -323,8 +337,8 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
       )}
 
       {/* Hidden Print Wrapper (Only visible when printing) */}
-      <div className="hidden print:block bg-white text-black font-sans p-0 m-0">
-        <div className="border-b-2 border-black pb-2 mb-4">
+      <div className="hidden print-page-container bg-white text-black font-sans p-0 m-0">
+        <div className="border-b-2 border-black pb-2 mb-4 shrink-0">
           <h1 className="text-2xl font-black text-center text-black uppercase tracking-tight">
             Checklist (Closing Time)
           </h1>
@@ -341,7 +355,7 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
           </div>
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex gap-4 shrink-0">
           <div className="flex-1">
             {renderPrintTable(leftColumnItems, 0)}
           </div>
@@ -350,13 +364,22 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
           </div>
         </div>
 
-        <div className="mt-4 border-2 border-slate-900 rounded-lg overflow-hidden shadow-sm">
-          <div className="bg-slate-100 border-b-2 border-slate-900 p-1.5">
+        <div className="mt-4 border-2 border-slate-900 rounded-lg overflow-hidden shadow-sm flex-1 flex flex-col">
+          <div className="bg-slate-100 border-b-2 border-slate-900 p-1.5 shrink-0">
             <h3 className="font-bold text-slate-900 text-center w-full text-xs uppercase tracking-widest">Remarks / Issues</h3>
           </div>
-          <div className="p-4 min-h-[70px] text-slate-900 whitespace-pre-wrap text-xs bg-white font-medium leading-relaxed">
+          <div className="p-4 flex-1 text-slate-900 whitespace-pre-wrap text-sm bg-white font-medium leading-relaxed">
             {checklist.remarks || <span className="text-transparent">.</span>}
           </div>
+        </div>
+
+        <div className="mt-12 grid grid-cols-2 gap-16 px-16 shrink-0 pb-8">
+           <div className="border-t-2 border-slate-900 pt-2 text-center">
+             <span className="font-bold text-slate-900 uppercase tracking-widest text-sm">Staff Signature</span>
+           </div>
+           <div className="border-t-2 border-slate-900 pt-2 text-center">
+             <span className="font-bold text-slate-900 uppercase tracking-widest text-sm">Manager Signature</span>
+           </div>
         </div>
       </div>
     </div>
