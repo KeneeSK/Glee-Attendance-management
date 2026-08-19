@@ -6,9 +6,10 @@ import { Save, Printer, ClipboardCheck, Edit3, FileDown, FileText, Building2, X 
 
 interface ChecklistTabProps {
   dateStr: string;
+  lastSyncTime?: number;
 }
 
-export function ChecklistTab({ dateStr }: ChecklistTabProps) {
+export function ChecklistTab({ dateStr, lastSyncTime }: ChecklistTabProps) {
   const [checklist, setChecklist] = useState<DailyChecklist>({
     date: dateStr,
     checkedItems: [],
@@ -22,7 +23,7 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
   useEffect(() => {
     setChecklist(getChecklistForDate(dateStr));
     setIsSaved(false);
-  }, [dateStr]);
+  }, [dateStr, lastSyncTime]);
 
   const handleStatusChange = (item: string, status: 'normal' | 'abnormal' | 'none') => {
     setChecklist((prev) => {

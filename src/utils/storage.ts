@@ -348,6 +348,7 @@ export function subscribeToServerDatabase(onUpdate: () => void): () => void {
     { id: 'staff', key: KEYS.STAFF },
     { id: 'attendance', key: KEYS.ATTENDANCE },
     { id: 'ldLogs', key: KEYS.LD_LOGS },
+    { id: 'checklists', key: KEYS.CHECKLISTS },
   ];
 
   const unsubscribes = collections.map(c => {

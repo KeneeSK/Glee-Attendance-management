@@ -44,6 +44,7 @@ export default function App() {
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [ldLogs, setLdLogs] = useState<LDLogEntry[]>([]);
+  const [lastSyncTime, setLastSyncTime] = useState<number>(Date.now());
   const [isStaffModalOpen, setIsStaffModalOpen] = useState<boolean>(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
 
@@ -66,6 +67,8 @@ export default function App() {
 
     const loadedLDs = getLDLogsForDate(selectedDate);
     setLdLogs(loadedLDs);
+    
+    setLastSyncTime(Date.now());
 
     // Create an auto backup whenever data is loaded/refreshed
     backupAllDataToLocalStorage();
@@ -219,6 +222,7 @@ export default function App() {
         {currentTab === 'checklist' && currentUser.permissions.canAccessReport && (
           <ChecklistTab
             dateStr={selectedDate}
+            lastSyncTime={lastSyncTime}
           />
         )}
       </main>
