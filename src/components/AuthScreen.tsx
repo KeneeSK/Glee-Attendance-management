@@ -46,19 +46,30 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onUnlock }) => {
       <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="w-full max-w-md bg-[#161b2b] border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 space-y-6">
-        {/* Brand Badge */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex p-3 rounded-2xl bg-gradient-to-br from-purple-600 to-blue-600 shadow-[0_0_20px_rgba(147,51,234,0.3)] mb-2">
-            <Lock className="w-8 h-8 text-white" />
+        {/* Brand Badge & Titles */}
+        <div className="text-center space-y-3">
+          <div className="inline-flex p-3 rounded-2xl bg-gradient-to-br from-purple-600 to-blue-600 shadow-[0_0_20px_rgba(147,51,234,0.35)] mb-1">
+            <Music className="w-8 h-8 text-white" />
           </div>
-          <div className="inline-block px-3 py-1 rounded-full bg-purple-950/50 border border-purple-500/30 text-[10px] font-bold uppercase tracking-widest text-purple-300">
-            Glee Angels
+
+          <div className="space-y-1">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase leading-tight bg-gradient-to-r from-purple-300 via-pink-200 to-blue-200 bg-clip-text text-transparent">
+              GLEE ANGELS
+            </h1>
+            <div className="text-base sm:text-lg font-bold tracking-wide text-purple-200 uppercase">
+              Management System
+            </div>
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-white uppercase">
-            Admin Portal
-          </h1>
-          <p className="text-xs text-slate-400">
-            Please log in with your administrator credentials.
+
+          <div className="flex items-center justify-center gap-1.5 pt-1">
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-purple-950/80 border border-purple-500/40 text-[11px] font-semibold text-purple-300 shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+              <span>Created by <strong className="text-white font-bold tracking-wider">KENEE</strong></span>
+            </span>
+          </div>
+
+          <p className="text-xs text-slate-400 pt-1">
+            Sign in with your authorized administrator credentials
           </p>
         </div>
 

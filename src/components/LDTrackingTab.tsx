@@ -562,7 +562,7 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
         </div>
       )}
 
-      {/* Table Management Modal (등록, 수정, 삭제) */}
+      {/* Table Management Modal (Register, Edit, Delete) */}
       {showTableManager && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]">
@@ -571,7 +571,7 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
               <div className="flex items-center gap-2">
                 <Settings className="w-5 h-5 text-purple-400" />
                 <h3 className="text-base font-bold text-slate-100">
-                  테이블 등록 및 관리 (Table Management)
+                  Table Management
                 </h3>
               </div>
               <button
@@ -587,12 +587,12 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
               {/* Register New Table Input */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-300 block">
-                  새 테이블 등록 (Register New Table)
+                  Register New Table
                 </label>
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="예: T-8, VIP-4"
+                    placeholder="e.g. T-8, VIP-4"
                     value={managerNewTableInput}
                     onChange={(e) => setManagerNewTableInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -605,7 +605,7 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
                     className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0"
                   >
                     <Plus className="w-4 h-4" />
-                    <span>등록</span>
+                    <span>Add</span>
                   </button>
                 </div>
               </div>
@@ -613,12 +613,12 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
               {/* Table List */}
               <div className="space-y-2 pt-2 border-t border-slate-800">
                 <label className="text-xs font-semibold text-slate-400 block">
-                  등록된 테이블 목록 ({masterTables.length}개)
+                  Registered Tables ({masterTables.length})
                 </label>
 
                 {masterTables.length === 0 ? (
                   <p className="text-xs text-slate-500 py-4 text-center italic">
-                    등록된 테이블이 없습니다.
+                    No registered tables found.
                   </p>
                 ) : (
                   <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
@@ -642,13 +642,13 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
                                 onClick={() => handleRenameMasterTable(tName, renameInput)}
                                 className="px-2.5 py-1 bg-emerald-950 text-emerald-300 border border-emerald-800 rounded font-semibold text-xs hover:bg-emerald-900"
                               >
-                                저장
+                                Save
                               </button>
                               <button
                                 onClick={() => setEditingTable(null)}
                                 className="px-2 py-1 bg-slate-800 text-slate-400 rounded text-xs hover:bg-slate-700"
                               >
-                                취소
+                                Cancel
                               </button>
                             </div>
                           ) : (
@@ -659,7 +659,7 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
                                 </span>
                                 {activeTables.includes(tName) && (
                                   <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-400 border border-cyan-800/40">
-                                    열림
+                                    Open
                                   </span>
                                 )}
                               </div>
@@ -673,14 +673,14 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
                                   className="px-2 py-1 bg-slate-800 hover:bg-purple-950 text-slate-300 hover:text-purple-300 rounded border border-slate-700 text-xs font-medium transition-colors flex items-center gap-1"
                                 >
                                   <Edit3 className="w-3 h-3" />
-                                  <span>수정</span>
+                                  <span>Edit</span>
                                 </button>
                                 <button
                                   onClick={() => setDeletingTableConfirm(tName)}
                                   className="px-2 py-1 bg-slate-800 hover:bg-rose-950 text-slate-300 hover:text-rose-300 rounded border border-slate-700 text-xs font-medium transition-colors flex items-center gap-1"
                                 >
                                   <Trash2 className="w-3 h-3" />
-                                  <span>삭제</span>
+                                  <span>Delete</span>
                                 </button>
                               </div>
                             </>
@@ -699,7 +699,7 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
                 onClick={() => setShowTableManager(false)}
                 className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition-colors"
               >
-                닫기 (Close)
+                Close
               </button>
             </div>
           </div>
@@ -712,23 +712,23 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
           <div className="bg-slate-900 border border-rose-900/60 p-6 rounded-2xl shadow-2xl w-full max-w-sm">
             <div className="flex items-center gap-2 text-rose-400 mb-3">
               <AlertCircle className="w-5 h-5" />
-              <h3 className="text-base font-bold text-slate-100">테이블 삭제 확인</h3>
+              <h3 className="text-base font-bold text-slate-100">Confirm Table Deletion</h3>
             </div>
             <p className="text-slate-300 text-xs mb-6 leading-relaxed">
-              테이블 <strong className="text-cyan-400">{deletingTableConfirm}</strong>을(를) 삭제하시겠습니까? 등록된 테이블 목록에서 제거됩니다.
+              Are you sure you want to delete table <strong className="text-cyan-400">{deletingTableConfirm}</strong>? It will be removed from registered tables.
             </p>
             <div className="flex justify-end gap-2.5">
               <button
                 onClick={() => setDeletingTableConfirm(null)}
                 className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition-colors"
               >
-                취소
+                Cancel
               </button>
               <button
                 onClick={() => handleDeleteMasterTable(deletingTableConfirm)}
                 className="px-4 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold transition-all shadow-md"
               >
-                삭제하기
+                Delete Table
               </button>
             </div>
           </div>

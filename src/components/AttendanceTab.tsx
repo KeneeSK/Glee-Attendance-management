@@ -292,7 +292,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
               title="Auto-fill attendance for staff who sold LDs on this date"
             >
               <Wine className="w-3.5 h-3.5 text-cyan-400" />
-              <span>LD 직원 출근 반영 ({staffWithLD.size}명)</span>
+              <span>Sync LD Attendance ({staffWithLD.size})</span>
             </button>
           )}
 
@@ -303,7 +303,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
             title="Auto-populate check-in and check-out times from work schedules"
           >
             <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-            <span>스케줄 시간 일괄 채우기</span>
+            <span>Auto-fill Schedules</span>
           </button>
 
           <button
@@ -539,7 +539,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                             <NoteInputControl
                               initialValue={rec.note || ''}
                               onSave={(val) => onUpdateRecord({ ...rec, note: val })}
-                              placeholder="사유 및 특이사항 입력..."
+                              placeholder="Enter notes / reasons..."
                             />
                           </td>
                         </tr>

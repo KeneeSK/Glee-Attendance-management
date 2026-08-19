@@ -205,7 +205,7 @@ export const AttendanceCardList: React.FC<Props> = ({ records, staffList, onUpda
                       initialValue={rec.note || ''}
                       onSave={(val) => onUpdateRecord({ ...rec, note: val })}
                       disabled={isDisabled}
-                      placeholder="사유 및 메모 입력..."
+                      placeholder="Enter notes / reasons..."
                     />
                   </div>
                 </div>

@@ -40,7 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
     const updateTime = () => {
       const now = new Date();
       setTimeStr(
-        now.toLocaleTimeString('ko-KR', {
+        now.toLocaleTimeString('en-US', {
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit',

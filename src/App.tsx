@@ -103,13 +103,13 @@ export default function App() {
   };
 
   const handleRestoreData = (jsonStr: string) => {
-    if (window.confirm('기존 데이터를 백업 파일로 복원하시겠습니까? (Restore data from backup file?)')) {
+    if (window.confirm('Are you sure you want to restore data from this backup file? Existing records will be updated.')) {
       const success = importDatabaseJSON(jsonStr);
       if (success) {
-        alert('데이터 복원이 완료되었습니다.');
+        alert('Database restored successfully.');
         refreshData();
       } else {
-        alert('올바르지 않은 백업 파일 형식입니다.');
+        alert('Invalid backup file format.');
       }
     }
   };

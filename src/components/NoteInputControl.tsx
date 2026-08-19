@@ -74,7 +74,7 @@ export const NoteInputControl: React.FC<Props> = ({
         {saveStatus === 'saved' && (
           <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 rounded text-[10px] font-semibold animate-fadeIn">
             <Check className="w-3 h-3 text-emerald-400" />
-            <span>저장됨</span>
+            <span>Saved</span>
           </span>
         )}
 
@@ -83,7 +83,7 @@ export const NoteInputControl: React.FC<Props> = ({
             type="button"
             onClick={handleClear}
             className="p-0.5 text-slate-500 hover:text-rose-400 hover:bg-slate-800/80 rounded transition-colors"
-            title="내용 지우기"
+            title="Clear note"
           >
             <X className="w-3 h-3" />
           </button>
