@@ -57,6 +57,45 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
     window.print();
   };
 
+  const midPoint = Math.ceil(CHECKLIST_ITEMS.length / 2);
+  const leftColumnItems = CHECKLIST_ITEMS.slice(0, midPoint);
+  const rightColumnItems = CHECKLIST_ITEMS.slice(midPoint);
+
+  const renderPrintTable = (items: string[], startIndex: number) => (
+    <table className="w-full text-left border-collapse border border-black">
+      <thead>
+        <tr className="bg-slate-100 border-b border-black">
+          <th className="font-bold text-black border-r border-black py-1 px-4 text-xs">
+            Task Description
+          </th>
+          <th className="font-bold text-center text-black py-1 px-2 text-xs w-16">
+            Status
+          </th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-black">
+        {items.map((item, localIndex) => {
+          const actualIndex = startIndex + localIndex;
+          const isChecked = checklist.checkedItems.includes(item);
+          return (
+            <tr key={actualIndex} className="border-b border-black">
+              <td className="py-1 px-3 border-r border-black text-black font-medium text-[11px]">
+                {item}
+              </td>
+              <td className="py-1 px-2 text-center">
+                {isChecked ? (
+                  <span className="text-sm font-bold text-black leading-none">✓</span>
+                ) : (
+                  <span className="text-slate-400 leading-none">-</span>
+                )}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <style type="text/css">
@@ -229,37 +268,14 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
               </div>
 
               <div>
-                <table className="w-full text-left border-collapse border border-black">
-                  <thead>
-                    <tr className="bg-slate-100 border-b border-black">
-                      <th className="font-bold text-black border-r border-black py-1 px-4 text-sm">
-                        Task Description
-                      </th>
-                      <th className="font-bold text-center text-black py-1 px-4 text-sm w-24">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-black">
-                    {CHECKLIST_ITEMS.map((item, index) => {
-                      const isChecked = checklist.checkedItems.includes(item);
-                      return (
-                        <tr key={index}>
-                          <td className="py-[5px] px-4 border-r border-black text-black font-medium text-xs">
-                            {item}
-                          </td>
-                          <td className="py-[5px] px-4 text-center">
-                            {isChecked ? (
-                              <span className="text-lg font-bold text-black leading-none">✓</span>
-                            ) : (
-                              <span className="text-slate-300 leading-none">-</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    {renderPrintTable(leftColumnItems, 0)}
+                  </div>
+                  <div className="flex-1">
+                    {renderPrintTable(rightColumnItems, midPoint)}
+                  </div>
+                </div>
               </div>
 
               <div className="mt-4 border border-black">
@@ -294,37 +310,14 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
           </div>
         </div>
 
-        <table className="w-full text-left border-collapse border border-black">
-          <thead>
-            <tr className="border-b border-black bg-gray-100">
-              <th className="font-bold text-black border-r border-black py-1 px-4 text-sm">
-                Task Description
-              </th>
-              <th className="font-bold text-center text-black py-1 px-4 text-sm w-24">
-                Status
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-black">
-            {CHECKLIST_ITEMS.map((item, index) => {
-              const isChecked = checklist.checkedItems.includes(item);
-              return (
-                <tr key={index} className="border-b border-black">
-                  <td className="py-[5px] px-4 border-r border-black text-black font-medium text-xs">
-                    {item}
-                  </td>
-                  <td className="py-[5px] px-4 text-center">
-                    {isChecked ? (
-                      <span className="text-lg font-bold text-black leading-none">✓</span>
-                    ) : (
-                      <span className="text-gray-400 leading-none">-</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="flex gap-4">
+          <div className="flex-1">
+            {renderPrintTable(leftColumnItems, 0)}
+          </div>
+          <div className="flex-1">
+            {renderPrintTable(rightColumnItems, midPoint)}
+          </div>
+        </div>
 
         <div className="mt-4 border border-black">
           <div className="bg-gray-100 border-b border-black p-1">
