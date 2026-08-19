@@ -4,6 +4,7 @@ import { CheckCircle2, AlertTriangle, XCircle, Clock, ShieldAlert } from 'lucide
 import { SCHEDULE_OPTIONS } from '../utils/initialData';
 import { calculateWorkingTime, parseScheduleToTimes } from '../utils/time';
 import { TimeInputControl } from './TimeInputControl';
+import { NoteInputControl } from './NoteInputControl';
 
 interface Props {
   records: AttendanceRecord[];
@@ -199,14 +200,12 @@ export const AttendanceCardList: React.FC<Props> = ({ records, staffList, onUpda
                   </div>
 
                   <div className="flex flex-col gap-1 mt-1">
-                    <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Notes</label>
-                    <input
-                      type="text"
-                      placeholder="Optional notes..."
-                      value={rec.note || ''}
-                      onChange={(e) => onUpdateRecord({ ...rec, note: e.target.value })}
+                    <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Notes / Reason</label>
+                    <NoteInputControl
+                      initialValue={rec.note || ''}
+                      onSave={(val) => onUpdateRecord({ ...rec, note: val })}
                       disabled={isDisabled}
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-purple-500 text-slate-200 text-xs px-2.5 py-1.5 rounded focus:outline-none"
+                      placeholder="사유 및 메모 입력..."
                     />
                   </div>
                 </div>

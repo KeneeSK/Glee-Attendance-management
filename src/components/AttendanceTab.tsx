@@ -4,6 +4,7 @@ import { Users, CheckCircle2, AlertTriangle, XCircle, Search, Clock, RefreshCw, 
 import { SCHEDULE_OPTIONS } from '../utils/initialData';
 import { calculateWorkingTime, parseScheduleToTimes } from '../utils/time';
 import { TimeInputControl } from './TimeInputControl';
+import { NoteInputControl } from './NoteInputControl';
 import { AttendanceCardList } from './AttendanceCardList';
 
 interface AttendanceTabProps {
@@ -534,13 +535,11 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                           </td>
 
                           {/* Note */}
-                          <td className="px-4 py-3">
-                            <input
-                              type="text"
-                              value={rec.note || ''}
-                              onChange={(e) => onUpdateRecord({ ...rec, note: e.target.value })}
-                              placeholder="Enter notes/remarks"
-                              className="w-full bg-slate-900/60 border border-slate-700/60 focus:border-purple-500 text-slate-200 text-xs px-2 py-1 rounded focus:outline-none"
+                          <td className="px-4 py-3 min-w-[200px]">
+                            <NoteInputControl
+                              initialValue={rec.note || ''}
+                              onSave={(val) => onUpdateRecord({ ...rec, note: val })}
+                              placeholder="사유 및 특이사항 입력..."
                             />
                           </td>
                         </tr>
