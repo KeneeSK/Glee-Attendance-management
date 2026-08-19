@@ -21,6 +21,7 @@ import { Header } from './components/Header';
 import { AttendanceTab } from './components/AttendanceTab';
 import { LDTrackingTab } from './components/LDTrackingTab';
 import { DailyReportTab } from './components/DailyReportTab';
+import { ChecklistTab } from './components/ChecklistTab';
 import { StaffManagerModal } from './components/StaffManagerModal';
 import { AuthScreen } from './components/AuthScreen';
 import { AdminManagerModal } from './components/AdminManagerModal';
@@ -212,6 +213,11 @@ export default function App() {
             attendanceRecords={attendanceRecords}
             ldLogs={ldLogs}
             staffList={staffList}
+          />
+        )}
+        {currentTab === 'checklist' && currentUser.permissions.canAccessReport && (
+          <ChecklistTab
+            dateStr={selectedDate}
           />
         )}
       </main>

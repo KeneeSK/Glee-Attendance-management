@@ -72,6 +72,7 @@ function readDB() {
       tables: INITIAL_TABLES,
       attendance: [],
       ldLogs: [],
+      checklists: [],
       admins: INITIAL_ADMINS,
       updatedAt: new Date().toISOString(),
     };
@@ -101,6 +102,7 @@ function readDB() {
       tables: INITIAL_TABLES,
       attendance: [],
       ldLogs: [],
+      checklists: [],
       admins: INITIAL_ADMINS,
       updatedAt: new Date().toISOString(),
     };
@@ -189,7 +191,7 @@ app.post('/api/login', (req, res) => {
 
 // Full Smart Sync / Save Database
 app.post('/api/db/sync', (req, res) => {
-  const { staff, tables, attendance, ldLogs, admins } = req.body;
+  const { staff, tables, attendance, ldLogs, checklists, admins } = req.body;
   const currentDB = readDB();
   
   const updatedDB = {
@@ -197,6 +199,7 @@ app.post('/api/db/sync', (req, res) => {
     tables: Array.isArray(tables) ? tables : currentDB.tables,
     attendance: Array.isArray(attendance) ? attendance : currentDB.attendance,
     ldLogs: Array.isArray(ldLogs) ? ldLogs : currentDB.ldLogs,
+    checklists: Array.isArray(checklists) ? checklists : (currentDB.checklists || []),
     admins: Array.isArray(admins) ? admins : (currentDB.admins || INITIAL_ADMINS),
     updatedAt: new Date().toISOString(),
   };
@@ -249,6 +252,27 @@ app.delete('/api/db/ld-log/:id', (req, res) => {
   res.json({ success: true, data: db.ldLogs });
 });
 
+// Save or Update Checklist
+app.post('/api/db/checklist', (req, res) => {
+  const newChecklist = req.body;
+  if (!newChecklist || !newChecklist.date) {
+    return res.status(400).json({ success: false, message: 'Invalid checklist record' });
+  }
+
+  const db = readDB();
+  db.checklists = db.checklists || [];
+  const existingIndex = db.checklists.findIndex((c: any) => c.date === newChecklist.date);
+  
+  if (existingIndex >= 0) {
+    db.checklists[existingIndex] = { ...db.checklists[existingIndex], ...newChecklist };
+  } else {
+    db.checklists.push(newChecklist);
+  }
+  
+  writeDB(db);
+  res.json({ success: true, data: db.checklists });
+});
+
 // Reset Database to Demo Defaults
 app.post('/api/db/reset', (req, res) => {
   const defaultData = {
@@ -256,6 +280,7 @@ app.post('/api/db/reset', (req, res) => {
     tables: INITIAL_TABLES,
     attendance: [],
     ldLogs: [],
+    checklists: [],
     updatedAt: new Date().toISOString(),
   };
   writeDB(defaultData);

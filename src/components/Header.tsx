@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TabType, AdminUser } from '../types';
-import { Calendar, Clock, Users, Wine, BarChart3, UserCog, RotateCcw, Music, LogOut, Download, Upload, ShieldCheck } from 'lucide-react';
+import { Calendar, Clock, Users, Wine, BarChart3, UserCog, RotateCcw, Music, LogOut, Download, Upload, ShieldCheck, ClipboardCheck } from 'lucide-react';
 
 interface HeaderProps {
   currentTab: TabType;
@@ -234,6 +234,19 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <BarChart3 className={`w-4 h-4 ${currentTab === 'report' ? 'text-pink-400' : ''}`} />
               <span>Daily Report</span>
+            </button>
+          )}
+          {currentUser.permissions.canAccessReport && (
+            <button
+              onClick={() => setCurrentTab('checklist')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
+                currentTab === 'checklist'
+                  ? 'bg-emerald-600/30 text-emerald-200 border border-emerald-500/50 shadow-md shadow-emerald-950/50 neon-border-emerald'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <ClipboardCheck className={`w-4 h-4 ${currentTab === 'checklist' ? 'text-emerald-400' : ''}`} />
+              <span>Checklist</span>
             </button>
           )}
         </div>

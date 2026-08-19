@@ -41,9 +41,16 @@ export interface TableSummary {
   assignedStaff: { staffId: string; staffName: string; count: number }[];
 }
 
-export type TabType = 'attendance' | 'ld' | 'report';
+export type TabType = 'attendance' | 'ld' | 'report' | 'checklist';
 
 export type AdminRoleType = 'super' | 'attendance_only' | 'ld_only' | 'report_only' | 'custom';
+
+export interface DailyChecklist {
+  date: string; // YYYY-MM-DD
+  checkedItems: string[]; // Array of checked item labels
+  remarks: string;
+  updatedAt: string;
+}
 
 export interface AdminPermissions {
   canAccessAttendance: boolean;

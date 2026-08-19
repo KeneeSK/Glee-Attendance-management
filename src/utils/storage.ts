@@ -11,7 +11,7 @@ async function syncToFirestore(collectionName: string, data: any) {
   }
 }
 
-import { Staff, AttendanceRecord, LDLogEntry, AdminUser } from '../types';
+import { Staff, AttendanceRecord, LDLogEntry, AdminUser, DailyChecklist } from '../types';
 import { DEFAULT_STAFF_LIST, PRESET_TABLES, generateInitialAttendance, generateInitialLDLogs, getTodayDateString } from './initialData';
 
 const KEYS = {
@@ -20,6 +20,7 @@ const KEYS = {
   LD_LOGS: 'lounge_ld_logs_v2',
   TABLES: 'lounge_tables_v2',
   ADMINS: 'lounge_admins_v2',
+  CHECKLISTS: 'lounge_checklists_v2',
 };
 
 const DEFAULT_ADMIN: AdminUser = {
@@ -319,6 +320,7 @@ export async function fetchServerDatabase(): Promise<boolean> {
       { id: 'staff', key: KEYS.STAFF },
       { id: 'attendance', key: KEYS.ATTENDANCE },
       { id: 'ldLogs', key: KEYS.LD_LOGS },
+      { id: 'checklists', key: KEYS.CHECKLISTS },
     ];
     let fetched = false;
     for (const c of collections) {
@@ -427,6 +429,7 @@ export function resetAllDataToDemo(): void {
   saveAllAttendance(initialAttendance);
   const initialLDs = generateInitialLDLogs(today, DEFAULT_STAFF_LIST);
   saveAllLDLogs(initialLDs);
+  saveAllChecklists([]);
 }
 
 // Backup & Snapshot functionality for data protection
@@ -439,6 +442,7 @@ export function backupAllDataToLocalStorage(): void {
       ldLogs: loadAllLDLogs(),
       tables: loadTableList(),
       admins: loadAdmins(),
+      checklists: loadAllChecklists(),
     };
     localStorage.setItem('lounge_auto_backup_v1', JSON.stringify(backupObj));
   } catch (err) {
@@ -456,6 +460,7 @@ export function exportDatabaseJSON(): void {
     ldLogs: loadAllLDLogs(),
     tables: loadTableList(),
     admins: loadAdmins(),
+    checklists: loadAllChecklists(),
   };
   
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -483,6 +488,7 @@ export function importDatabaseJSON(jsonString: string): boolean {
     if (Array.isArray(parsed.ldLogs)) saveAllLDLogs(parsed.ldLogs);
     if (Array.isArray(parsed.tables)) saveTableList(parsed.tables);
     if (Array.isArray(parsed.admins)) saveAdmins(parsed.admins);
+    if (Array.isArray(parsed.checklists)) saveAllChecklists(parsed.checklists);
 
     return true;
   } catch (err) {
@@ -492,6 +498,44 @@ export function importDatabaseJSON(jsonString: string): boolean {
 }
 
 // CSV Export Generator with UTF-8 BOM
+export function loadAllChecklists(): DailyChecklist[] {
+  try {
+    const data = localStorage.getItem(KEYS.CHECKLISTS);
+    if (!data) return [];
+    return JSON.parse(data);
+  } catch (err) {
+    console.error('Failed to load checklists:', err);
+    return [];
+  }
+}
+
+export function saveAllChecklists(checklists: DailyChecklist[]): void {
+  try {
+    localStorage.setItem(KEYS.CHECKLISTS, JSON.stringify(checklists));
+    syncToFirestore('checklists', checklists);
+  } catch (err) {
+    console.error('Failed to save checklists:', err);
+  }
+}
+
+export function getChecklistForDate(dateStr: string): DailyChecklist {
+  const all = loadAllChecklists();
+  return all.find((c) => c.date === dateStr) || { date: dateStr, checkedItems: [], remarks: '', updatedAt: new Date().toISOString() };
+}
+
+export function saveChecklistForDate(checklist: DailyChecklist): void {
+  const all = loadAllChecklists();
+  const index = all.findIndex((c) => c.date === checklist.date);
+  
+  if (index >= 0) {
+    all[index] = checklist;
+  } else {
+    all.push(checklist);
+  }
+  
+  saveAllChecklists(all);
+}
+
 export function downloadDailyReportCSV(dateStr: string) {
   const staffList = loadStaffList();
   const attendanceList = getAttendanceForDate(dateStr);
