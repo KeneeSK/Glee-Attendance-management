@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TabType, AdminUser } from '../types';
-import { Calendar, Clock, Users, Wine, BarChart3, UserCog, RotateCcw, Music, LogOut, Download, Upload, ShieldCheck, ClipboardCheck } from 'lucide-react';
+import { Calendar, Clock, Users, Wine, BarChart3, UserCog, RotateCcw, Music, LogOut, Download, Upload, ShieldCheck, ClipboardCheck, FileSpreadsheet } from 'lucide-react';
 
 interface HeaderProps {
   currentTab: TabType;
@@ -11,6 +11,7 @@ interface HeaderProps {
   totalLDToday: number;
   onOpenStaffManager: () => void;
   onOpenAdminManager: () => void;
+  onOpenGoogleSheets: () => void;
   onResetDemoData: () => void;
   onLogout: () => void;
   onBackupData: () => void;
@@ -27,6 +28,7 @@ export const Header: React.FC<HeaderProps> = ({
   totalLDToday,
   onOpenStaffManager,
   onOpenAdminManager,
+  onOpenGoogleSheets,
   onResetDemoData,
   onLogout,
   onBackupData,
@@ -142,6 +144,16 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="hidden sm:inline">Admins</span>
               </button>
             )}
+
+            {/* Google Sheets Sync Button */}
+            <button
+              onClick={onOpenGoogleSheets}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold bg-emerald-950/90 hover:bg-emerald-900 text-emerald-200 border border-emerald-700/70 rounded-lg shadow-sm transition-colors cursor-pointer"
+              title="Sync & Backup Database to Google Sheets"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">Google Sheets</span>
+            </button>
 
             {/* Backup JSON Button */}
             <button

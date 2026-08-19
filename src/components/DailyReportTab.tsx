@@ -43,6 +43,7 @@ interface DailyReportTabProps {
   ldLogs: LDLogEntry[];
   staffList: Staff[];
   onNavigateToChecklist?: () => void;
+  onOpenGoogleSheets?: () => void;
 }
 
 export const DailyReportTab: React.FC<DailyReportTabProps> = ({
@@ -52,6 +53,7 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
   ldLogs,
   staffList,
   onNavigateToChecklist,
+  onOpenGoogleSheets,
 }) => {
   const [showPrintModal, setShowPrintModal] = useState(false);
   const isPastDate = dateStr < getTodayDateString();
@@ -606,13 +608,24 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
 
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* Google Sheets Sync Button */}
+          {onOpenGoogleSheets && (
+            <button
+              onClick={onOpenGoogleSheets}
+              className="flex items-center gap-2 px-3.5 py-2 bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-950/80 border border-emerald-400/40 transition-all active:scale-95 cursor-pointer"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-300" />
+              <span>Google Sheets Sync</span>
+            </button>
+          )}
+
           {/* Export to CSV Button */}
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-950/80 border border-emerald-400/30 transition-all active:scale-95 cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl border border-slate-700 transition-all active:scale-95 cursor-pointer"
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-200" />
-            <span>Export to CSV</span>
+            <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+            <span>Export CSV</span>
           </button>
 
           {/* Formal PDF Report Modal Preview Button */}

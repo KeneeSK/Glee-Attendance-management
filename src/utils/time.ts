@@ -1,3 +1,10 @@
+export function parseTimeToMinutes(timeStr: string): number {
+  if (!timeStr) return -1;
+  const [h, m] = timeStr.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return -1;
+  return h * 60 + m;
+}
+
 export function calculateWorkingTime(checkIn: string, checkOut: string): string | null {
   if (!checkIn || !checkOut) return null;
   const [inH, inM] = checkIn.split(':').map(Number);

@@ -26,6 +26,7 @@ import { ChecklistTab } from './components/ChecklistTab';
 import { StaffManagerModal } from './components/StaffManagerModal';
 import { AuthScreen } from './components/AuthScreen';
 import { AdminManagerModal } from './components/AdminManagerModal';
+import { GoogleSheetsSyncModal } from './components/GoogleSheetsSyncModal';
 
 export default function App() {
   // Persist login state in localStorage
@@ -48,6 +49,7 @@ export default function App() {
   const [lastSyncTime, setLastSyncTime] = useState<number>(Date.now());
   const [isStaffModalOpen, setIsStaffModalOpen] = useState<boolean>(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
+  const [isGoogleSheetsModalOpen, setIsGoogleSheetsModalOpen] = useState<boolean>(false);
 
   // Auto-switch to first available tab based on permissions
   useEffect(() => {
@@ -104,13 +106,19 @@ export default function App() {
   };
 
   const handleRestoreData = (jsonStr: string) => {
-    if (window.confirm('Are you sure you want to restore data from this backup file? Existing records will be updated.')) {
-      const success = importDatabaseJSON(jsonStr);
-      if (success) {
-        alert('Database restored successfully.');
+    if (window.confirm('Are you sure you want to restore data from this backup file? Existing records will be safely updated.')) {
+      const res = importDatabaseJSON(jsonStr);
+      if (res.success) {
+        alert(
+          `Database Restored Successfully!\n` +
+          `• Staff: ${res.counts?.staff || 0}\n` +
+          `• Attendance: ${res.counts?.attendance || 0}\n` +
+          `• LD Logs: ${res.counts?.ldLogs || 0}\n` +
+          `• Checklists: ${res.counts?.checklists || 0}`
+        );
         refreshData();
       } else {
-        alert('Invalid backup file format.');
+        alert(`Restore Failed: ${res.message}`);
       }
     }
   };
@@ -190,6 +198,7 @@ export default function App() {
         totalLDToday={totalLDToday}
         onOpenStaffManager={() => setIsStaffModalOpen(true)}
         onOpenAdminManager={() => setIsAdminModalOpen(true)}
+        onOpenGoogleSheets={() => setIsGoogleSheetsModalOpen(true)}
         onResetDemoData={handleResetDemoData}
         onLogout={handleLogout}
         onBackupData={handleBackupData}
@@ -229,6 +238,7 @@ export default function App() {
             ldLogs={ldLogs}
             staffList={staffList}
             onNavigateToChecklist={() => setCurrentTab('checklist')}
+            onOpenGoogleSheets={() => setIsGoogleSheetsModalOpen(true)}
           />
         )}
         {currentTab === 'checklist' && currentUser.permissions.canAccessReport && (
@@ -255,6 +265,13 @@ export default function App() {
           currentUser={currentUser}
         />
       )}
+
+      {/* Google Sheets Sync & Backup Modal */}
+      <GoogleSheetsSyncModal
+        isOpen={isGoogleSheetsModalOpen}
+        onClose={() => setIsGoogleSheetsModalOpen(false)}
+        onRefreshData={refreshData}
+      />
 
       {/* Lounge Footer */}
       <footer className="border-t border-slate-900 bg-[#080a12] py-4 text-center text-xs text-slate-500">

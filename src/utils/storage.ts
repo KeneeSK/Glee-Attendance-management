@@ -304,41 +304,43 @@ export function saveStaffList(staffList: Staff[]): void {
 
 export function loadAllAttendance(): AttendanceRecord[] {
   try {
-    let allRecords: AttendanceRecord[] = [];
-
     // 1. Primary key
     const data = localStorage.getItem(KEYS.ATTENDANCE);
     if (data) {
       try {
         const parsed = JSON.parse(data);
-        if (Array.isArray(parsed)) {
-          allRecords = mergeAttendanceRecords(allRecords, parsed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return mergeAttendanceRecords([], parsed);
         }
       } catch (e) {
         console.error('Parse primary attendance error:', e);
       }
     }
 
-    // 2. Auto backup
+    // 2. Auto backup fallback (only if primary is empty)
     const autoBackup = localStorage.getItem('lounge_auto_backup_v1');
     if (autoBackup) {
       try {
         const parsedBackup = JSON.parse(autoBackup);
-        if (Array.isArray(parsedBackup?.attendance)) {
-          allRecords = mergeAttendanceRecords(allRecords, parsedBackup.attendance);
+        if (Array.isArray(parsedBackup?.attendance) && parsedBackup.attendance.length > 0) {
+          const res = mergeAttendanceRecords([], parsedBackup.attendance);
+          localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(res));
+          return res;
         }
       } catch (e) {
         console.error('Parse auto backup attendance error:', e);
       }
     }
 
-    // 3. Legacy v1 key
+    // 3. Legacy v1 key fallback
     const v1Data = localStorage.getItem('lounge_attendance_v1');
     if (v1Data) {
       try {
         const parsedV1 = JSON.parse(v1Data);
-        if (Array.isArray(parsedV1)) {
-          allRecords = mergeAttendanceRecords(allRecords, parsedV1);
+        if (Array.isArray(parsedV1) && parsedV1.length > 0) {
+          const res = mergeAttendanceRecords([], parsedV1);
+          localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(res));
+          return res;
         }
       } catch (e) {
         console.error('Parse v1 attendance error:', e);
@@ -346,15 +348,11 @@ export function loadAllAttendance(): AttendanceRecord[] {
     }
 
     // If completely empty, generate today's initial skeleton
-    if (allRecords.length === 0) {
-      const today = getTodayDateString();
-      const staff = loadStaffList();
-      const initial = generateInitialAttendance(today, staff);
-      localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(initial));
-      return initial;
-    }
-
-    return allRecords;
+    const today = getTodayDateString();
+    const staff = loadStaffList();
+    const initial = generateInitialAttendance(today, staff);
+    localStorage.setItem(KEYS.ATTENDANCE, JSON.stringify(initial));
+    return initial;
   } catch (err) {
     console.error('Failed to load attendance:', err);
     return [];
@@ -474,56 +472,54 @@ export function batchUpdateAttendanceRecords(recordsToUpdate: AttendanceRecord[]
 
 export function loadAllLDLogs(): LDLogEntry[] {
   try {
-    let allLogs: LDLogEntry[] = [];
-
     // 1. Primary key
     const data = localStorage.getItem(KEYS.LD_LOGS);
     if (data) {
       try {
         const parsed = JSON.parse(data);
-        if (Array.isArray(parsed)) {
-          allLogs = mergeLDLogs(allLogs, parsed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return mergeLDLogs([], parsed);
         }
       } catch (e) {
         console.error('Parse primary LD logs error:', e);
       }
     }
 
-    // 2. Auto backup
+    // 2. Auto backup fallback
     const autoBackup = localStorage.getItem('lounge_auto_backup_v1');
     if (autoBackup) {
       try {
         const parsedBackup = JSON.parse(autoBackup);
-        if (Array.isArray(parsedBackup?.ldLogs)) {
-          allLogs = mergeLDLogs(allLogs, parsedBackup.ldLogs);
+        if (Array.isArray(parsedBackup?.ldLogs) && parsedBackup.ldLogs.length > 0) {
+          const res = mergeLDLogs([], parsedBackup.ldLogs);
+          localStorage.setItem(KEYS.LD_LOGS, JSON.stringify(res));
+          return res;
         }
       } catch (e) {
         console.error('Parse backup LD logs error:', e);
       }
     }
 
-    // 3. Legacy v1 key
+    // 3. Legacy v1 key fallback
     const v1Data = localStorage.getItem('lounge_ld_logs_v1');
     if (v1Data) {
       try {
         const parsedV1 = JSON.parse(v1Data);
-        if (Array.isArray(parsedV1)) {
-          allLogs = mergeLDLogs(allLogs, parsedV1);
+        if (Array.isArray(parsedV1) && parsedV1.length > 0) {
+          const res = mergeLDLogs([], parsedV1);
+          localStorage.setItem(KEYS.LD_LOGS, JSON.stringify(res));
+          return res;
         }
       } catch (e) {
         console.error('Parse v1 LD logs error:', e);
       }
     }
 
-    if (allLogs.length === 0) {
-      const today = getTodayDateString();
-      const staff = loadStaffList();
-      const initial = generateInitialLDLogs(today, staff);
-      localStorage.setItem(KEYS.LD_LOGS, JSON.stringify(initial));
-      return initial;
-    }
-
-    return allLogs;
+    const today = getTodayDateString();
+    const staff = loadStaffList();
+    const initial = generateInitialLDLogs(today, staff);
+    localStorage.setItem(KEYS.LD_LOGS, JSON.stringify(initial));
+    return initial;
   } catch (err) {
     console.error('Failed to load LD logs:', err);
     return [];
@@ -692,48 +688,125 @@ export function backupAllDataToLocalStorage(): void {
 
 // Export complete data to JSON file
 export function exportDatabaseJSON(): void {
+  const staff = loadStaffList();
+  const attendance = loadAllAttendance();
+  const ldLogs = loadAllLDLogs();
+  const tables = loadTableList();
+  const admins = loadAdmins();
+  const checklists = loadAllChecklists();
+
   const data = {
-    version: '1.0',
+    system: 'GLEE ANGELS Management System',
+    author: 'KENEE',
+    schemaVersion: '2.0',
     exportedAt: new Date().toISOString(),
-    staff: loadStaffList(),
-    attendance: loadAllAttendance(),
-    ldLogs: loadAllLDLogs(),
-    tables: loadTableList(),
-    admins: loadAdmins(),
-    checklists: loadAllChecklists(),
+    databaseId: 'ai-studio-gleeangelsmusicl-0f06ef10-f1df-484b-84e4-1ca2d14c8925',
+    summary: {
+      totalStaff: staff.length,
+      totalAttendanceRecords: attendance.length,
+      totalLDLogs: ldLogs.length,
+      totalTables: tables.length,
+      totalAdmins: admins.length,
+      totalChecklists: checklists.length,
+    },
+    staff,
+    attendance,
+    ldLogs,
+    tables,
+    admins,
+    checklists,
   };
   
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `Glee_Angels_Database_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+  const dateStr = new Date().toISOString().slice(0, 10);
+  link.download = `GLEE_ANGELS_DB_BACKUP_${dateStr}.json`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
 
-// Import complete data from JSON string
-export function importDatabaseJSON(jsonString: string): boolean {
+export interface DatabaseImportResult {
+  success: boolean;
+  message: string;
+  counts?: {
+    staff: number;
+    attendance: number;
+    ldLogs: number;
+    tables: number;
+    admins: number;
+    checklists: number;
+  };
+  error?: string;
+}
+
+// Import complete data from JSON string with strict validation
+export function importDatabaseJSON(jsonString: string): DatabaseImportResult {
   try {
     const parsed = JSON.parse(jsonString);
-    if (!parsed || typeof parsed !== 'object') return false;
+    if (!parsed || typeof parsed !== 'object') {
+      return { success: false, message: 'Invalid JSON structure or file is corrupted.' };
+    }
 
     // Create a safety backup of existing data first
     backupAllDataToLocalStorage();
 
-    if (Array.isArray(parsed.staff)) saveStaffList(parsed.staff);
-    if (Array.isArray(parsed.attendance)) saveAllAttendance(parsed.attendance);
-    if (Array.isArray(parsed.ldLogs)) saveAllLDLogs(parsed.ldLogs);
-    if (Array.isArray(parsed.tables)) saveTableList(parsed.tables);
-    if (Array.isArray(parsed.admins)) saveAdmins(parsed.admins);
-    if (Array.isArray(parsed.checklists)) saveAllChecklists(parsed.checklists);
+    let staffCount = 0;
+    let attCount = 0;
+    let ldCount = 0;
+    let tableCount = 0;
+    let adminCount = 0;
+    let checklistCount = 0;
 
-    return true;
-  } catch (err) {
+    if (Array.isArray(parsed.staff) && parsed.staff.length > 0) {
+      saveStaffList(parsed.staff);
+      staffCount = parsed.staff.length;
+    }
+    if (Array.isArray(parsed.attendance)) {
+      const sanitized = mergeAttendanceRecords([], parsed.attendance);
+      saveAllAttendance(sanitized);
+      attCount = sanitized.length;
+    }
+    if (Array.isArray(parsed.ldLogs)) {
+      const sanitized = mergeLDLogs([], parsed.ldLogs);
+      saveAllLDLogs(sanitized);
+      ldCount = sanitized.length;
+    }
+    if (Array.isArray(parsed.tables) && parsed.tables.length > 0) {
+      saveTableList(parsed.tables);
+      tableCount = parsed.tables.length;
+    }
+    if (Array.isArray(parsed.admins) && parsed.admins.length > 0) {
+      saveAdmins(parsed.admins);
+      adminCount = parsed.admins.length;
+    }
+    if (Array.isArray(parsed.checklists)) {
+      saveAllChecklists(parsed.checklists);
+      checklistCount = parsed.checklists.length;
+    }
+
+    return {
+      success: true,
+      message: 'Database restored successfully without data loss.',
+      counts: {
+        staff: staffCount,
+        attendance: attCount,
+        ldLogs: ldCount,
+        tables: tableCount,
+        admins: adminCount,
+        checklists: checklistCount,
+      },
+    };
+  } catch (err: any) {
     console.error('Failed to import database JSON:', err);
-    return false;
+    return {
+      success: false,
+      message: 'Failed to parse database backup file. Please verify JSON file format.',
+      error: err?.message || String(err),
+    };
   }
 }
 
