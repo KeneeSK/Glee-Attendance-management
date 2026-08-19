@@ -3,6 +3,7 @@ import { AttendanceRecord, LDLogEntry, Staff } from '../types';
 import { Users, CheckCircle2, AlertTriangle, XCircle, Search, Clock, RefreshCw, ShieldAlert, Sparkles, Wine } from 'lucide-react';
 import { SCHEDULE_OPTIONS } from '../utils/initialData';
 import { calculateWorkingTime, parseScheduleToTimes } from '../utils/time';
+import { getTodayDateString } from '../utils/initialData';
 import { TimeInputControl } from './TimeInputControl';
 import { NoteInputControl } from './NoteInputControl';
 import { AttendanceCardList } from './AttendanceCardList';
@@ -164,17 +165,19 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
     }
   };
 
+  const isPastDate = dateStr < getTodayDateString();
+
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Overview Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         <div className="lounge-card rounded-xl p-3.5 border-l-4 border-l-purple-500">
           <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-            <span>Total Staff Roster</span>
+            <span>Total Staff</span>
             <Users className="w-4 h-4 text-purple-400" />
           </div>
           <div className="mt-2 text-2xl font-bold text-slate-100">{totalStaff}</div>
-          <div className="mt-1 text-[11px] text-slate-400">Scheduled for {dateStr}</div>
+          <div className="mt-1 text-[11px] text-slate-400">{dateStr}</div>
         </div>
 
         <div className="lounge-card rounded-xl p-3.5 border-l-4 border-l-emerald-500">
@@ -195,16 +198,25 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
           <div className="mt-1 text-[11px] text-amber-400/80">Delayed schedule</div>
         </div>
 
+        <div className="lounge-card rounded-xl p-3.5 border-l-4 border-l-sky-500">
+          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>Day Off</span>
+            <CheckCircle2 className="w-4 h-4 text-sky-400" />
+          </div>
+          <div className="mt-2 text-2xl font-bold text-sky-300">{dayOffCount}</div>
+          <div className="mt-1 text-[11px] text-sky-400/80">Scheduled rest</div>
+        </div>
+
         <div className="lounge-card rounded-xl p-3.5 border-l-4 border-l-rose-500">
           <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
             <span>Absent / Leave</span>
             <XCircle className="w-4 h-4 text-rose-400" />
           </div>
           <div className="mt-2 text-2xl font-bold text-rose-300">{absentCount}</div>
-          <div className="mt-1 text-[11px] text-rose-400/80">Off duty today</div>
+          <div className="mt-1 text-[11px] text-rose-400/80">Off duty / Absent</div>
         </div>
 
-        <div className="lounge-card rounded-xl p-3.5 border-l-4 border-l-orange-500 col-span-2 sm:col-span-1">
+        <div className="lounge-card rounded-xl p-3.5 border-l-4 border-l-orange-500">
           <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
             <span>Suspended</span>
             <ShieldAlert className="w-4 h-4 text-orange-400" />
@@ -523,13 +535,17 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-950/80 text-amber-300 border border-amber-800/60">
                                 <AlertTriangle className="w-3 h-3" /> Late
                               </span>
-                            ) : rec.checkInTime ? (
+                            ) : (rec.checkInTime && !isDisabled) ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-800/60">
                                 <CheckCircle2 className="w-3 h-3" /> On Time
                               </span>
+                            ) : isPastDate ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-900 text-slate-400 border border-slate-700/80">
+                                <XCircle className="w-3 h-3 text-slate-500" /> Unrecorded
+                              </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-800 text-slate-400 border border-slate-700">
-                                Pending
+                                <Clock className="w-3 h-3 text-slate-400" /> Pending
                               </span>
                             )}
                           </td>

@@ -5,6 +5,7 @@ import {
   saveStaffList,
   getAttendanceForDate,
   updateAttendanceRecord,
+  batchUpdateAttendanceRecords,
   getLDLogsForDate,
   addLDLogEntry,
   saveAllLDLogs,
@@ -135,6 +136,14 @@ export default function App() {
     );
   };
 
+  const handleBatchUpdateAttendance = (updatedRecords: AttendanceRecord[]) => {
+    batchUpdateAttendanceRecords(updatedRecords);
+    setAttendanceRecords((prev) => {
+      const updateMap = new Map(updatedRecords.map((r) => [r.id, r]));
+      return prev.map((r) => updateMap.get(r.id) || r);
+    });
+  };
+
   // Handlers for LD Tracking
   const handleAddLDLog = (entry: Omit<LDLogEntry, 'id' | 'createdAt'>) => {
     const newEntry = addLDLogEntry(entry);
@@ -196,6 +205,7 @@ export default function App() {
             attendanceRecords={attendanceRecords}
             staffList={staffList}
             onUpdateRecord={handleUpdateAttendance}
+            onBatchUpdateRecords={handleBatchUpdateAttendance}
             onRefreshDate={refreshData}
           />
         )}

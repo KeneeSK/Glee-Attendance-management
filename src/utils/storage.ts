@@ -47,10 +47,22 @@ export function mergeAttendanceRecords(listA: AttendanceRecord[], listB: Attenda
     if (!r || !r.staffId) return;
     const normDate = normalizeDateStr(r.date);
     const key = `${normDate}_${r.staffId}`;
+    
+    // Clean up status conflicts: if Day Off / Absent / Suspended, clear times and late flag
+    let cleanRecord = { ...r };
+    if (cleanRecord.isDayOff || cleanRecord.isAbsent || cleanRecord.isSuspended) {
+      cleanRecord = {
+        ...cleanRecord,
+        checkInTime: '',
+        checkOutTime: '',
+        isLate: false,
+      };
+    }
+
     const normalizedRec: AttendanceRecord = {
-      ...r,
+      ...cleanRecord,
       date: normDate,
-      id: r.id || `att_${normDate}_${r.staffId}`,
+      id: cleanRecord.id || `att_${normDate}_${cleanRecord.staffId}`,
     };
     const existing = map.get(key);
 
@@ -73,17 +85,11 @@ export function mergeAttendanceRecords(listA: AttendanceRecord[], listB: Attenda
         map.set(key, {
           ...existing,
           ...normalizedRec,
-          checkInTime: normalizedRec.checkInTime || existing.checkInTime,
-          checkOutTime: normalizedRec.checkOutTime || existing.checkOutTime,
-          note: normalizedRec.note || existing.note,
         });
       } else {
         map.set(key, {
           ...normalizedRec,
           ...existing,
-          checkInTime: existing.checkInTime || normalizedRec.checkInTime,
-          checkOutTime: existing.checkOutTime || normalizedRec.checkOutTime,
-          note: existing.note || normalizedRec.note,
         });
       }
     } else {
@@ -417,10 +423,14 @@ export function getAttendanceForDate(dateStr: string): AttendanceRecord[] {
 
 export function updateAttendanceRecord(updatedRecord: AttendanceRecord): void {
   const normDate = normalizeDateStr(updatedRecord.date);
+  let clean = { ...updatedRecord };
+  if (clean.isDayOff || clean.isAbsent || clean.isSuspended) {
+    clean = { ...clean, checkInTime: '', checkOutTime: '', isLate: false };
+  }
   const normalized: AttendanceRecord = {
-    ...updatedRecord,
+    ...clean,
     date: normDate,
-    id: updatedRecord.id || `att_${normDate}_${updatedRecord.staffId}`,
+    id: clean.id || `att_${normDate}_${clean.staffId}`,
     updatedAt: new Date().toISOString(),
   };
 
@@ -438,6 +448,28 @@ export function updateAttendanceRecord(updatedRecord: AttendanceRecord): void {
   }
 
   saveAllAttendance(updatedAll);
+}
+
+export function batchUpdateAttendanceRecords(recordsToUpdate: AttendanceRecord[]): void {
+  if (!Array.isArray(recordsToUpdate) || recordsToUpdate.length === 0) return;
+  const nowStr = new Date().toISOString();
+  const normalizedList: AttendanceRecord[] = recordsToUpdate.map((r) => {
+    const normDate = normalizeDateStr(r.date);
+    let clean = { ...r };
+    if (clean.isDayOff || clean.isAbsent || clean.isSuspended) {
+      clean = { ...clean, checkInTime: '', checkOutTime: '', isLate: false };
+    }
+    return {
+      ...clean,
+      date: normDate,
+      id: clean.id || `att_${normDate}_${clean.staffId}`,
+      updatedAt: nowStr,
+    };
+  });
+
+  const all = loadAllAttendance();
+  const merged = mergeAttendanceRecords(all, normalizedList);
+  saveAllAttendance(merged);
 }
 
 export function loadAllLDLogs(): LDLogEntry[] {

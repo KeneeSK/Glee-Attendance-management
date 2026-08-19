@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AttendanceRecord, LDLogEntry, Staff } from '../types';
 import { downloadDailyReportCSV } from '../utils/storage';
 import { calculateWorkingTime } from '../utils/time';
+import { getTodayDateString } from '../utils/initialData';
 import {
   FileSpreadsheet,
   Calendar,
@@ -53,6 +54,7 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
   onNavigateToChecklist,
 }) => {
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const isPastDate = dateStr < getTodayDateString();
 
   // Aggregate data per staff member
   const staffSummaryList = staffList.map((staff) => {
@@ -67,14 +69,14 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
 
     let statusType: 'present' | 'late' | 'absent' | 'dayoff' | 'suspended' | 'unregistered' | 'pending' = 'pending';
     if (att) {
-      if (att.isAbsent) statusType = 'absent';
+      if (att.isDayOff) statusType = 'dayoff';
+      else if (att.isAbsent) statusType = 'absent';
       else if (att.isSuspended) statusType = 'suspended';
-      else if (att.isDayOff) statusType = 'dayoff';
-      else if (att.isLate) statusType = 'late';
+      else if (att.isLate && att.checkInTime) statusType = 'late';
       else if (att.checkInTime) statusType = 'present';
-      else statusType = 'pending';
+      else statusType = isPastDate ? 'absent' : 'pending';
     } else {
-      statusType = 'unregistered';
+      statusType = isPastDate ? 'absent' : 'unregistered';
     }
 
     return {
@@ -266,6 +268,10 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                         ) : item.statusType === 'present' ? (
                           <span className="inline-block px-1.5 py-0.2 rounded text-[8.5px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 uppercase">
                             On Time
+                          </span>
+                        ) : isPastDate ? (
+                          <span className="inline-block px-1.5 py-0.2 rounded text-[8.5px] font-semibold bg-slate-100 text-slate-500 border border-slate-300 uppercase">
+                            Unrecorded
                           </span>
                         ) : (
                           <span className="inline-block px-1.5 py-0.2 rounded text-[8.5px] font-semibold bg-slate-100 text-slate-600 border border-slate-300 uppercase">

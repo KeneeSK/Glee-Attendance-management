@@ -1,7 +1,7 @@
 import React from 'react';
 import { AttendanceRecord, Staff } from '../types';
 import { CheckCircle2, AlertTriangle, XCircle, Clock, ShieldAlert } from 'lucide-react';
-import { SCHEDULE_OPTIONS } from '../utils/initialData';
+import { SCHEDULE_OPTIONS, getTodayDateString } from '../utils/initialData';
 import { calculateWorkingTime, parseScheduleToTimes } from '../utils/time';
 import { TimeInputControl } from './TimeInputControl';
 import { NoteInputControl } from './NoteInputControl';
@@ -63,6 +63,8 @@ export const AttendanceCardList: React.FC<Props> = ({ records, staffList, onUpda
               const isSuspended = rec.isSuspended;
               const isDisabled = isAbsent || isDayOff || isSuspended;
               const isLate = rec.isLate && !isDisabled;
+              const isPresent = Boolean(rec.checkInTime) && !isDisabled;
+              const isPastDate = rec.date < getTodayDateString();
               const scheduleTimes = parseScheduleToTimes(rec.schedule || '');
 
               return (
@@ -93,13 +95,17 @@ export const AttendanceCardList: React.FC<Props> = ({ records, staffList, onUpda
                         <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-bold bg-amber-950/80 text-amber-300 border border-amber-800/60">
                           <AlertTriangle className="w-3.5 h-3.5" /> Late
                         </span>
-                      ) : rec.checkInTime ? (
+                      ) : isPresent ? (
                         <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-800/60">
                           <CheckCircle2 className="w-3.5 h-3.5" /> On Time
                         </span>
+                      ) : isPastDate ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-bold bg-slate-900 text-slate-400 border border-slate-700/80">
+                          <XCircle className="w-3.5 h-3.5 text-slate-500" /> Unrecorded
+                        </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">
-                          Pending
+                          <Clock className="w-3.5 h-3.5 text-slate-400" /> Pending
                         </span>
                       )}
                     </div>
