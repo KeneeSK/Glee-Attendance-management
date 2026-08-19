@@ -93,12 +93,12 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
               </td>
               <td className="py-1.5 px-1 text-center align-middle whitespace-nowrap">
                 {isNormal ? (
-                  <span className="inline-block px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-[10px] tracking-widest uppercase shadow-sm">
-                    Normal
+                  <span className="inline-block px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-[10px] uppercase shadow-sm">
+                    ✅
                   </span>
                 ) : isAbnormal ? (
-                  <span className="inline-block px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-300 font-bold text-[10px] tracking-widest uppercase shadow-sm">
-                    Abnormal
+                  <span className="inline-block px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-300 font-bold text-[10px] uppercase shadow-sm">
+                    ❌
                   </span>
                 ) : (
                   <span className="text-slate-300 text-xs">-</span>
@@ -206,23 +206,23 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
                         <div className="flex justify-center items-center gap-2">
                           <button
                             onClick={() => handleStatusChange(item, isNormal ? 'none' : 'normal')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border uppercase tracking-wider ${
+                            className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all border ${
                               isNormal
                                 ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-900/50'
                                 : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200'
                             }`}
                           >
-                            Normal
+                            ✅
                           </button>
                           <button
                             onClick={() => handleStatusChange(item, isAbnormal ? 'none' : 'abnormal')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border uppercase tracking-wider ${
+                            className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all border ${
                               isAbnormal
                                 ? 'bg-red-600 text-white border-red-500 shadow-md shadow-red-900/50'
                                 : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200'
                             }`}
                           >
-                            Abnormal
+                            ❌
                           </button>
                         </div>
                       </td>
