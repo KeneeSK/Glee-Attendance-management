@@ -47,7 +47,8 @@ export type AdminRoleType = 'super' | 'attendance_only' | 'ld_only' | 'report_on
 
 export interface DailyChecklist {
   date: string; // YYYY-MM-DD
-  checkedItems: string[]; // Array of checked item labels
+  checkedItems: string[]; // Array of checked item labels (Normal)
+  abnormalItems?: string[]; // Array of abnormal item labels
   remarks: string;
   updatedAt: string;
 }

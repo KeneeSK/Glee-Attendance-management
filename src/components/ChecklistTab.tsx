@@ -12,6 +12,7 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
   const [checklist, setChecklist] = useState<DailyChecklist>({
     date: dateStr,
     checkedItems: [],
+    abnormalItems: [],
     remarks: '',
     updatedAt: new Date().toISOString(),
   });
@@ -23,15 +24,21 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
     setIsSaved(false);
   }, [dateStr]);
 
-  const handleToggleItem = (item: string) => {
+  const handleStatusChange = (item: string, status: 'normal' | 'abnormal' | 'none') => {
     setChecklist((prev) => {
-      const isChecked = prev.checkedItems.includes(item);
-      const newCheckedItems = isChecked
-        ? prev.checkedItems.filter((i) => i !== item)
-        : [...prev.checkedItems, item];
+      const newChecked = prev.checkedItems.filter((i) => i !== item);
+      const newAbnormal = (prev.abnormalItems || []).filter((i) => i !== item);
+
+      if (status === 'normal') {
+        newChecked.push(item);
+      } else if (status === 'abnormal') {
+        newAbnormal.push(item);
+      }
+
       return {
         ...prev,
-        checkedItems: newCheckedItems,
+        checkedItems: newChecked,
+        abnormalItems: newAbnormal,
         updatedAt: new Date().toISOString(),
       };
     });
@@ -62,31 +69,39 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
   const rightColumnItems = CHECKLIST_ITEMS.slice(midPoint);
 
   const renderPrintTable = (items: string[], startIndex: number) => (
-    <table className="w-full text-left border-collapse border border-black">
+    <table className="w-full text-left border-collapse border-2 border-slate-900 bg-white shadow-sm">
       <thead>
-        <tr className="bg-slate-100 border-b border-black">
-          <th className="font-bold text-black border-r border-black py-1 px-4 text-xs">
+        <tr className="bg-slate-100 border-b-2 border-slate-900">
+          <th className="font-bold text-slate-900 border-r-2 border-slate-900 py-1.5 px-3 text-[11px] uppercase tracking-wide">
             Task Description
           </th>
-          <th className="font-bold text-center text-black py-1 px-2 text-xs w-16">
+          <th className="font-bold text-center text-slate-900 py-1.5 px-1 text-[11px] w-20 uppercase tracking-wide">
             Status
           </th>
         </tr>
       </thead>
-      <tbody className="divide-y divide-black">
+      <tbody className="divide-y divide-slate-400">
         {items.map((item, localIndex) => {
           const actualIndex = startIndex + localIndex;
-          const isChecked = checklist.checkedItems.includes(item);
+          const isNormal = checklist.checkedItems.includes(item);
+          const isAbnormal = checklist.abnormalItems?.includes(item);
+          
           return (
-            <tr key={actualIndex} className="border-b border-black">
-              <td className="py-1 px-3 border-r border-black text-black font-medium text-[11px]">
+            <tr key={actualIndex} className="border-b border-slate-400/50 hover:bg-slate-50 transition-colors">
+              <td className="py-1 px-3 border-r-2 border-slate-900 text-slate-900 font-semibold text-[11px] leading-snug">
                 {item}
               </td>
-              <td className="py-1 px-2 text-center">
-                {isChecked ? (
-                  <span className="text-sm font-bold text-black leading-none">✓</span>
+              <td className="py-1 px-1 text-center align-middle">
+                {isNormal ? (
+                  <span className="inline-block px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-[10px] tracking-widest shadow-sm">
+                    정상
+                  </span>
+                ) : isAbnormal ? (
+                  <span className="inline-block px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-300 font-bold text-[10px] tracking-widest shadow-sm">
+                    비정상
+                  </span>
                 ) : (
-                  <span className="text-slate-400 leading-none">-</span>
+                  <span className="text-slate-300 text-xs">-</span>
                 )}
               </td>
             </tr>
@@ -163,31 +178,47 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
               </thead>
               <tbody className="divide-y divide-slate-800/50">
                 {CHECKLIST_ITEMS.map((item, index) => {
-                  const isChecked = checklist.checkedItems.includes(item);
+                  const isNormal = checklist.checkedItems.includes(item);
+                  const isAbnormal = checklist.abnormalItems?.includes(item);
+                  
                   return (
                     <tr 
                       key={index} 
-                      className={`group transition-colors ${isChecked ? 'bg-indigo-900/10' : 'hover:bg-slate-800/30'}`}
+                      className={`group transition-colors ${
+                        isNormal ? 'bg-emerald-900/10' : isAbnormal ? 'bg-red-900/10' : 'hover:bg-slate-800/30'
+                      }`}
                     >
                       <td className="py-3 px-4">
-                        <label 
-                          htmlFor={`check-${index}`}
-                          className="flex items-center gap-3 cursor-pointer select-none"
-                        >
-                          <span className={`text-sm sm:text-base font-medium ${isChecked ? 'text-indigo-300' : 'text-slate-300'}`}>
+                        <div className="flex items-center gap-3 select-none">
+                          <span className={`text-sm sm:text-base font-medium ${
+                            isNormal ? 'text-emerald-400' : isAbnormal ? 'text-red-400' : 'text-slate-300'
+                          }`}>
                             {item}
                           </span>
-                        </label>
+                        </div>
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <div className="flex justify-center">
-                          <input
-                            type="checkbox"
-                            id={`check-${index}`}
-                            checked={isChecked}
-                            onChange={() => handleToggleItem(item)}
-                            className="w-5 h-5 rounded border-slate-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-900 bg-slate-800 cursor-pointer"
-                          />
+                        <div className="flex justify-center items-center gap-2">
+                          <button
+                            onClick={() => handleStatusChange(item, isNormal ? 'none' : 'normal')}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                              isNormal
+                                ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-900/50'
+                                : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200'
+                            }`}
+                          >
+                            정상
+                          </button>
+                          <button
+                            onClick={() => handleStatusChange(item, isAbnormal ? 'none' : 'abnormal')}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                              isAbnormal
+                                ? 'bg-red-600 text-white border-red-500 shadow-md shadow-red-900/50'
+                                : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200'
+                            }`}
+                          >
+                            비정상
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -278,11 +309,11 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
                 </div>
               </div>
 
-              <div className="mt-4 border border-black">
-                <div className="bg-slate-100 border-b border-black p-1">
-                  <h3 className="font-bold text-black text-center w-full text-sm uppercase">Remarks</h3>
+              <div className="mt-4 border-2 border-slate-900 rounded-lg overflow-hidden shadow-sm">
+                <div className="bg-slate-100 border-b-2 border-slate-900 p-1.5">
+                  <h3 className="font-bold text-slate-900 text-center w-full text-xs uppercase tracking-widest">Remarks / Issues</h3>
                 </div>
-                <div className="p-3 min-h-[60px] text-black whitespace-pre-wrap text-sm">
+                <div className="p-4 min-h-[70px] text-slate-900 whitespace-pre-wrap text-xs bg-white font-medium leading-relaxed">
                   {checklist.remarks || <span className="text-transparent">.</span>}
                 </div>
               </div>
@@ -319,11 +350,11 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
           </div>
         </div>
 
-        <div className="mt-4 border border-black">
-          <div className="bg-gray-100 border-b border-black p-1">
-            <h3 className="font-bold text-black text-center w-full text-sm uppercase">Remarks</h3>
+        <div className="mt-4 border-2 border-slate-900 rounded-lg overflow-hidden shadow-sm">
+          <div className="bg-slate-100 border-b-2 border-slate-900 p-1.5">
+            <h3 className="font-bold text-slate-900 text-center w-full text-xs uppercase tracking-widest">Remarks / Issues</h3>
           </div>
-          <div className="p-3 min-h-[60px] text-black whitespace-pre-wrap text-sm">
+          <div className="p-4 min-h-[70px] text-slate-900 whitespace-pre-wrap text-xs bg-white font-medium leading-relaxed">
             {checklist.remarks || <span className="text-transparent">.</span>}
           </div>
         </div>
