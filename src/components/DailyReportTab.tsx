@@ -145,215 +145,400 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
     window.print();
   };
 
-  const renderPrintableReportSheet = () => (
-    <div className="bg-white text-slate-900 font-sans p-6 sm:p-7 flex flex-col justify-between h-full w-full max-w-[210mm] mx-auto box-border select-text">
-      {/* 1. Header */}
-      <div className="border-b-2 border-slate-900 pb-2 flex justify-between items-end shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-purple-900 flex items-center justify-center text-white border border-purple-700">
-            <Wine className="w-5 h-5 text-purple-200" />
+  const renderPrintableReportSheet = () => {
+    const generatedTime = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    const docId = `GAR-${dateStr.replace(/-/g, '')}-01`;
+
+    return (
+      <div className="space-y-6 print:space-y-0 select-text">
+        {/* ========================================================================= */}
+        {/* PAGE 1: ATTENDANCE & INDIVIDUAL STAFF LD PERFORMANCE                     */}
+        {/* ========================================================================= */}
+        <div className="daily-report-print-page bg-white text-slate-900 font-sans p-6 sm:p-7 flex flex-col justify-between w-full max-w-[210mm] mx-auto box-border shadow-md print:shadow-none">
+          {/* Header 1 */}
+          <div className="border-b-2 border-slate-900 pb-2.5 flex justify-between items-end shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-purple-900 flex items-center justify-center text-white border border-purple-700 shadow-sm">
+                <Wine className="w-6 h-6 text-purple-200" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-black tracking-wider text-slate-900 uppercase leading-none">
+                  GLEE ANGELS
+                </h1>
+                <p className="text-xs text-slate-700 font-bold tracking-wide uppercase mt-1">
+                  Official Daily Attendance &amp; Staff Performance Report
+                </p>
+              </div>
+            </div>
+
+            <div className="text-right text-[11px] text-slate-700 space-y-0.5 border-l-2 pl-3 border-slate-300 font-medium">
+              <div><strong className="text-slate-900">Date:</strong> <span className="font-mono font-bold text-slate-900 text-xs">{dateStr}</span></div>
+              <div><strong className="text-slate-900">Doc ID:</strong> <span className="font-mono">{docId}</span></div>
+              <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                <span className="text-[9.5px] text-slate-500 font-mono">Generated: {generatedTime}</span>
+                <span className="px-1.5 py-0.2 bg-purple-900 text-white rounded text-[9px] font-bold">PAGE 1 OF 2</span>
+              </div>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-black tracking-wider text-slate-900 uppercase leading-tight">
-              GLEE ANGELS
-            </h1>
-            <p className="text-[11px] text-slate-700 font-bold tracking-wide uppercase">
-              Official Daily Attendance &amp; LD Sales Report
-            </p>
+
+          {/* KPI Strip */}
+          <div className="my-2.5 grid grid-cols-6 gap-2 text-center border-2 border-slate-900 rounded-lg p-2 bg-slate-50 shrink-0">
+            <div className="border-r border-slate-300 pr-1">
+              <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Total LD Sales</div>
+              <div className="text-lg font-black text-purple-900 font-mono leading-tight">{totalLDCount} <span className="text-[10px] font-sans font-bold">drinks</span></div>
+            </div>
+            <div className="border-r border-slate-300 px-1">
+              <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Working Staff</div>
+              <div className="text-lg font-black text-slate-900 font-mono leading-tight">{workingStaffCount} <span className="text-[10px] font-sans text-slate-500 font-normal">/ {staffList.length}</span></div>
+            </div>
+            <div className="border-r border-slate-300 px-1">
+              <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">On Time</div>
+              <div className="text-lg font-black text-emerald-700 font-mono leading-tight">{presentCount}</div>
+            </div>
+            <div className="border-r border-slate-300 px-1">
+              <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Late</div>
+              <div className="text-lg font-black text-amber-700 font-mono leading-tight">{lateCount}</div>
+            </div>
+            <div className="border-r border-slate-300 px-1">
+              <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Absent</div>
+              <div className="text-lg font-black text-rose-700 font-mono leading-tight">{absentCount}</div>
+            </div>
+            <div className="pl-1">
+              <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Day Off / Susp.</div>
+              <div className="text-lg font-black text-sky-700 font-mono leading-tight">{dayOffCount + suspendedCount}</div>
+            </div>
           </div>
-        </div>
 
-        <div className="text-right text-[10.5px] text-slate-700 space-y-0.5 border-l-2 pl-3 border-slate-300 font-medium">
-          <div><strong className="text-slate-900">Date:</strong> <span className="font-mono font-bold text-slate-900 text-[11px]">{dateStr}</span></div>
-          <div><strong className="text-slate-900">Doc ID:</strong> <span className="font-mono">GAR-{dateStr.replace(/-/g, '')}-01</span></div>
-          <div className="text-[9.5px] text-slate-500 font-mono">Generated: {new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</div>
-        </div>
-      </div>
+          {/* Section 1: Staff Attendance & LD Sales Summary Table */}
+          <div className="flex-1 min-h-0 flex flex-col justify-start">
+            <div className="flex justify-between items-center border-b border-slate-900 pb-1 mb-1.5 shrink-0">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-purple-700" />
+                <span>1. Staff Attendance &amp; Individual LD Performance ({staffList.length} Staff)</span>
+              </h3>
+              <span className="text-[10px] font-semibold text-slate-600">
+                On Duty: <strong className="text-slate-900">{workingStaffCount}</strong> | Total LD Sold: <strong className="text-purple-900">{totalLDCount}</strong>
+              </span>
+            </div>
 
-      {/* 2. Executive KPI Grid (6 metrics in 1 neat row) */}
-      <div className="my-2 grid grid-cols-6 gap-1.5 text-center border-2 border-slate-900 rounded-lg p-1.5 bg-slate-50 shrink-0">
-        <div className="border-r border-slate-300 pr-1">
-          <div className="text-[8.5px] text-slate-500 font-bold uppercase tracking-wider">Total LD Sales</div>
-          <div className="text-base font-black text-purple-900 font-mono leading-tight">{totalLDCount}</div>
-        </div>
-        <div className="border-r border-slate-300 px-1">
-          <div className="text-[8.5px] text-slate-500 font-bold uppercase tracking-wider">Working Staff</div>
-          <div className="text-base font-black text-slate-900 font-mono leading-tight">{workingStaffCount}</div>
-        </div>
-        <div className="border-r border-slate-300 px-1">
-          <div className="text-[8.5px] text-slate-500 font-bold uppercase tracking-wider">On Time</div>
-          <div className="text-base font-black text-emerald-700 font-mono leading-tight">{presentCount}</div>
-        </div>
-        <div className="border-r border-slate-300 px-1">
-          <div className="text-[8.5px] text-slate-500 font-bold uppercase tracking-wider">Late</div>
-          <div className="text-base font-black text-amber-700 font-mono leading-tight">{lateCount}</div>
-        </div>
-        <div className="border-r border-slate-300 px-1">
-          <div className="text-[8.5px] text-slate-500 font-bold uppercase tracking-wider">Absent</div>
-          <div className="text-base font-black text-rose-700 font-mono leading-tight">{absentCount}</div>
-        </div>
-        <div className="pl-1">
-          <div className="text-[8.5px] text-slate-500 font-bold uppercase tracking-wider">Day Off / Susp.</div>
-          <div className="text-base font-black text-sky-700 font-mono leading-tight">{dayOffCount + suspendedCount}</div>
-        </div>
-      </div>
-
-      {/* 3. Section 1: Staff Attendance & LD Matrix (High density, crisp) */}
-      <div className="flex-1 min-h-0 flex flex-col justify-start">
-        <div className="flex justify-between items-center border-b border-slate-900 pb-0.5 mb-1 shrink-0">
-          <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5 text-purple-700" />
-            <span>1. Staff Attendance &amp; LD Sales Summary</span>
-          </h3>
-          <span className="text-[9.5px] font-semibold text-slate-600">
-            Total Staff: {staffList.length} (On Duty: {workingStaffCount})
-          </span>
-        </div>
-
-        <div className="w-full overflow-hidden border border-slate-900 rounded">
-          <table className="w-full text-left border-collapse text-[9.5px]">
-            <thead className="bg-slate-900 text-white font-bold text-[8.5px] uppercase tracking-wider">
-              <tr>
-                <th className="py-1 px-1.5 border-r border-slate-700 w-14 text-center">ID</th>
-                <th className="py-1 px-2 border-r border-slate-700 w-28">Name</th>
-                <th className="py-1 px-2 border-r border-slate-700">Role</th>
-                <th className="py-1 px-1.5 border-r border-slate-700 text-center w-20">Status</th>
-                <th className="py-1 px-2 border-r border-slate-700 whitespace-nowrap">Working Time</th>
-                <th className="py-1 px-1.5 border-r border-slate-700 text-center w-14 bg-purple-950 text-purple-200 font-black">Total LD</th>
-                <th className="py-1 px-2">Assigned Tables &amp; Notes</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-300">
-              {staffSummaryList.map((item, idx) => (
-                <tr key={item.staff.id} className={idx % 2 === 1 ? 'bg-slate-50/90' : 'bg-white'}>
-                  <td className="py-0.5 px-1.5 border-r border-slate-300 font-mono text-[8.5px] text-center font-bold text-slate-700">
-                    {item.staff.id}
-                  </td>
-                  <td className="py-0.5 px-2 border-r border-slate-300 font-bold text-slate-900 whitespace-nowrap">
-                    {item.staff.name}
-                  </td>
-                  <td className="py-0.5 px-2 border-r border-slate-300 text-slate-700 text-[9px] truncate max-w-[130px]">
-                    {item.staff.role}
-                  </td>
-                  <td className="py-0.5 px-1.5 border-r border-slate-300 text-center whitespace-nowrap">
-                    {item.statusType === 'suspended' ? (
-                      <span className="inline-block px-1.5 py-0.2 rounded text-[8px] font-bold bg-orange-100 text-orange-900 border border-orange-300 uppercase">
-                        Suspended
-                      </span>
-                    ) : item.statusType === 'dayoff' ? (
-                      <span className="inline-block px-1.5 py-0.2 rounded text-[8px] font-bold bg-sky-100 text-sky-900 border border-sky-300 uppercase">
-                        Day Off
-                      </span>
-                    ) : item.statusType === 'absent' ? (
-                      <span className="inline-block px-1.5 py-0.2 rounded text-[8px] font-bold bg-rose-100 text-rose-900 border border-rose-300 uppercase">
-                        Absent
-                      </span>
-                    ) : item.statusType === 'late' ? (
-                      <span className="inline-block px-1.5 py-0.2 rounded text-[8px] font-bold bg-amber-100 text-amber-900 border border-amber-300 uppercase">
-                        Late
-                      </span>
-                    ) : item.statusType === 'present' ? (
-                      <span className="inline-block px-1.5 py-0.2 rounded text-[8px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 uppercase">
-                        On Time
-                      </span>
-                    ) : (
-                      <span className="inline-block px-1.5 py-0.2 rounded text-[8px] font-semibold bg-slate-100 text-slate-600 border border-slate-300 uppercase">
-                        Pending
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-0.5 px-2 border-r border-slate-300 font-mono text-[8.5px] text-slate-800 whitespace-nowrap">
-                    {item.att?.checkInTime ? (
-                      <span>
-                        {item.att.checkInTime} ~ {item.att.checkOutTime || 'Working'}
-                        {item.att.checkOutTime && (
-                          <span className="ml-1 text-slate-600 font-sans font-bold">
-                            ({calculateWorkingTime(item.att.checkInTime, item.att.checkOutTime)})
+            <div className="w-full overflow-hidden border border-slate-900 rounded">
+              <table className="w-full text-left border-collapse text-[10px]">
+                <thead className="bg-slate-900 text-white font-bold text-[9px] uppercase tracking-wider">
+                  <tr>
+                    <th className="py-1 px-1.5 border-r border-slate-700 w-14 text-center">ID</th>
+                    <th className="py-1 px-2 border-r border-slate-700 w-28">Name</th>
+                    <th className="py-1 px-2 border-r border-slate-700 w-24">Role</th>
+                    <th className="py-1 px-1.5 border-r border-slate-700 text-center w-20">Status</th>
+                    <th className="py-1 px-2 border-r border-slate-700 whitespace-nowrap">Schedule / Work Time</th>
+                    <th className="py-1 px-2 border-r border-slate-700 text-center w-20 bg-purple-950 text-purple-200 font-black">Total LD</th>
+                    <th className="py-1 px-2">Assigned Tables &amp; Notes</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-300">
+                  {staffSummaryList.map((item, idx) => (
+                    <tr key={item.staff.id} className={idx % 2 === 1 ? 'bg-slate-50/90' : 'bg-white'}>
+                      <td className="py-0.5 px-1.5 border-r border-slate-300 font-mono text-[9px] text-center font-bold text-slate-700">
+                        {item.staff.id}
+                      </td>
+                      <td className="py-0.5 px-2 border-r border-slate-300 font-bold text-slate-900 whitespace-nowrap">
+                        {item.staff.name}
+                      </td>
+                      <td className="py-0.5 px-2 border-r border-slate-300 text-slate-700 text-[9.5px] truncate max-w-[120px]">
+                        {item.staff.role}
+                      </td>
+                      <td className="py-0.5 px-1.5 border-r border-slate-300 text-center whitespace-nowrap">
+                        {item.statusType === 'suspended' ? (
+                          <span className="inline-block px-1.5 py-0.2 rounded text-[8.5px] font-bold bg-orange-100 text-orange-900 border border-orange-300 uppercase">
+                            Suspended
+                          </span>
+                        ) : item.statusType === 'dayoff' ? (
+                          <span className="inline-block px-1.5 py-0.2 rounded text-[8.5px] font-bold bg-sky-100 text-sky-900 border border-sky-300 uppercase">
+                            Day Off
+                          </span>
+                        ) : item.statusType === 'absent' ? (
+                          <span className="inline-block px-1.5 py-0.2 rounded text-[8.5px] font-bold bg-rose-100 text-rose-900 border border-rose-300 uppercase">
+                            Absent
+                          </span>
+                        ) : item.statusType === 'late' ? (
+                          <span className="inline-block px-1.5 py-0.2 rounded text-[8.5px] font-bold bg-amber-100 text-amber-900 border border-amber-300 uppercase">
+                            Late
+                          </span>
+                        ) : item.statusType === 'present' ? (
+                          <span className="inline-block px-1.5 py-0.2 rounded text-[8.5px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 uppercase">
+                            On Time
+                          </span>
+                        ) : (
+                          <span className="inline-block px-1.5 py-0.2 rounded text-[8.5px] font-semibold bg-slate-100 text-slate-600 border border-slate-300 uppercase">
+                            Pending
                           </span>
                         )}
-                      </span>
-                    ) : (
-                      <span className="text-slate-400">{item.staff.defaultSchedule || '-'}</span>
-                    )}
-                  </td>
-                  <td className="py-0.5 px-1.5 border-r border-slate-300 text-center font-bold font-mono text-[9.5px] bg-purple-50 text-purple-900">
-                    {item.totalLD > 0 ? (
-                      <span className="font-black text-purple-900">{item.totalLD}</span>
-                    ) : (
-                      <span className="text-slate-300">-</span>
-                    )}
-                  </td>
-                  <td className="py-0.5 px-2 text-[8.5px] text-slate-700">
-                    {item.assignedTables.length > 0 && (
-                      <span className="font-mono font-bold text-indigo-900 mr-1.5">
-                        [{item.assignedTables.join(', ')}]
-                      </span>
-                    )}
-                    {item.att?.note ? (
-                      <span className="italic text-slate-600">{item.att.note}</span>
-                    ) : !item.assignedTables.length ? (
-                      <span className="text-slate-300">-</span>
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                      </td>
+                      <td className="py-0.5 px-2 border-r border-slate-300 font-mono text-[9px] text-slate-800 whitespace-nowrap">
+                        {item.att?.checkInTime ? (
+                          <span>
+                            <strong className="text-slate-900">{item.att.checkInTime}</strong> ~ {item.att.checkOutTime || <span className="text-emerald-700 font-bold">Working</span>}
+                            {item.att.checkOutTime && (
+                              <span className="ml-1 text-slate-600 font-sans font-bold">
+                                ({calculateWorkingTime(item.att.checkInTime, item.att.checkOutTime)})
+                              </span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">{item.staff.defaultSchedule || '-'}</span>
+                        )}
+                      </td>
+                      <td className="py-0.5 px-2 border-r border-slate-300 text-center font-bold font-mono text-[10.5px] bg-purple-50 text-purple-950">
+                        {item.totalLD > 0 ? (
+                          <span className="font-black text-purple-900">{item.totalLD} <span className="text-[8.5px] font-sans font-normal text-purple-700">drinks</span></span>
+                        ) : (
+                          <span className="text-slate-300 font-normal">-</span>
+                        )}
+                      </td>
+                      <td className="py-0.5 px-2 text-[9px] text-slate-700">
+                        {item.assignedTables.length > 0 && (
+                          <span className="font-mono font-bold text-indigo-900 mr-1.5">
+                            [{item.assignedTables.join(', ')}]
+                          </span>
+                        )}
+                        {item.att?.note ? (
+                          <span className="italic text-slate-600">{item.att.note}</span>
+                        ) : !item.assignedTables.length ? (
+                          <span className="text-slate-300">-</span>
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-slate-100 font-bold text-[9.5px] border-t-2 border-slate-900 text-slate-900">
+                  <tr>
+                    <td colSpan={4} className="py-1 px-2 border-r border-slate-300">
+                      TOTAL SUMMARY: {staffList.length} STAFF REGISTERED ({workingStaffCount} ON DUTY)
+                    </td>
+                    <td className="py-1 px-2 border-r border-slate-300 text-right">
+                      TOTAL LD DRINKS:
+                    </td>
+                    <td className="py-1 px-2 border-r border-slate-300 text-center bg-purple-100 text-purple-950 font-black font-mono text-[11px]">
+                      {totalLDCount}
+                    </td>
+                    <td className="py-1 px-2 text-slate-500 text-[8.5px]">
+                      Verified by Daily Ledger
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
 
-      {/* 4. Section 2: Table Breakdown (Clean Compact Grid) */}
-      <div className="my-2 shrink-0">
-        <div className="flex justify-between items-center border-b border-slate-900 pb-0.5 mb-1">
-          <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-            <Wine className="w-3.5 h-3.5 text-cyan-700" />
-            <span>2. Table LD Breakdown</span>
-          </h3>
-          <span className="text-[9.5px] text-slate-600 font-semibold">
-            Active Tables: {tableSummaryMap.size}
-          </span>
+          {/* Page 1 Footer */}
+          <div className="mt-2 pt-1.5 border-t border-slate-300 flex justify-between items-center text-[9px] text-slate-500 font-mono shrink-0">
+            <span>GLEE ANGELS Management System • Daily Attendance Ledger</span>
+            <span className="font-bold text-slate-700">Page 1 of 2 • (See Page 2 for Table Breakdown &amp; Detailed LD Log)</span>
+          </div>
         </div>
 
-        {tableSummaryMap.size > 0 ? (
-          <div className="grid grid-cols-4 gap-1.5 text-[9px]">
-            {Array.from(tableSummaryMap.entries()).map(([tableNo, val]) => (
-              <div key={tableNo} className="border border-slate-300 rounded p-1 bg-slate-50 flex justify-between items-center">
-                <span className="font-bold font-mono text-slate-900">{tableNo}</span>
-                <span className="font-mono font-black text-purple-900">{val.totalLD} drinks</span>
-                <span className="text-[8px] text-slate-600 truncate max-w-[65px]" title={Array.from(val.staffNames).join(', ')}>
-                  {Array.from(val.staffNames).join(', ')}
-                </span>
+        {/* ========================================================================= */}
+        {/* PAGE 2: TABLE BREAKDOWN, DETAILED LD TIMELINE & MANAGEMENT APPROVAL      */}
+        {/* ========================================================================= */}
+        <div className="daily-report-print-page bg-white text-slate-900 font-sans p-6 sm:p-7 flex flex-col justify-between w-full max-w-[210mm] mx-auto box-border shadow-md print:shadow-none">
+          {/* Header 2 */}
+          <div className="border-b-2 border-slate-900 pb-2.5 flex justify-between items-end shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-indigo-950 flex items-center justify-center text-white border border-indigo-700 shadow-sm">
+                <FileSpreadsheet className="w-6 h-6 text-indigo-200" />
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="border border-dashed border-slate-300 rounded p-1 text-center text-[9px] text-slate-400 bg-slate-50/50">
-            No Table LD records for this date.
-          </div>
-        )}
-      </div>
+              <div>
+                <h1 className="text-2xl font-black tracking-wider text-slate-900 uppercase leading-none">
+                  GLEE ANGELS
+                </h1>
+                <p className="text-xs text-slate-700 font-bold tracking-wide uppercase mt-1">
+                  LD Sales Audit &amp; Detailed Transaction Timeline
+                </p>
+              </div>
+            </div>
 
-      {/* 5. Signature & Approval Block */}
-      <div className="pt-2 border-t-2 border-slate-900 grid grid-cols-2 gap-12 text-xs text-slate-800 shrink-0">
-        <div>
-          <p className="font-bold text-slate-900 mb-5 text-[10px]">Prepared By (Supervisor):</p>
-          <div className="border-b border-slate-400 w-4/5"></div>
-          <p className="text-[8.5px] text-slate-500 mt-1 font-mono">Signature &amp; Date</p>
-        </div>
-        <div>
-          <p className="font-bold text-slate-900 mb-5 text-[10px]">Approved By (Manager / Owner):</p>
-          <div className="border-b border-slate-400 w-4/5"></div>
-          <p className="text-[8.5px] text-slate-500 mt-1 font-mono">Signature &amp; Date</p>
-        </div>
-      </div>
+            <div className="text-right text-[11px] text-slate-700 space-y-0.5 border-l-2 pl-3 border-slate-300 font-medium">
+              <div><strong className="text-slate-900">Date:</strong> <span className="font-mono font-bold text-slate-900 text-xs">{dateStr}</span></div>
+              <div><strong className="text-slate-900">Doc ID:</strong> <span className="font-mono">{docId}</span></div>
+              <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                <span className="text-[9.5px] text-slate-500 font-mono">Generated: {generatedTime}</span>
+                <span className="px-1.5 py-0.2 bg-indigo-900 text-white rounded text-[9px] font-bold">PAGE 2 OF 2</span>
+              </div>
+            </div>
+          </div>
 
-      {/* 6. Footer Watermark */}
-      <div className="mt-1 pt-1 border-t border-slate-200 flex justify-between items-center text-[8.5px] text-slate-400 font-mono shrink-0">
-        <span>Generated via GLEE ANGELS Management System</span>
-        <span>Page 1 of 1</span>
+          {/* Section 2: Table-by-Table LD Sales Analysis Table */}
+          <div className="my-2 shrink-0">
+            <div className="flex justify-between items-center border-b border-slate-900 pb-1 mb-1.5">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                <Wine className="w-4 h-4 text-cyan-700" />
+                <span>2. Table-wise LD Sales Breakdown ({tableSummaryMap.size} Active Tables)</span>
+              </h3>
+              <span className="text-[10px] font-semibold text-slate-600">
+                Total Drinks: <strong className="text-purple-900">{totalLDCount}</strong>
+              </span>
+            </div>
+
+            {tableSummaryMap.size > 0 ? (
+              <div className="border border-slate-900 rounded overflow-hidden">
+                <table className="w-full text-left border-collapse text-[10px]">
+                  <thead className="bg-slate-900 text-white font-bold text-[9px] uppercase tracking-wider">
+                    <tr>
+                      <th className="py-1 px-2.5 border-r border-slate-700 w-24">Table No</th>
+                      <th className="py-1 px-2 border-r border-slate-700 text-center w-28 bg-purple-950 text-purple-200">Total LD Drinks</th>
+                      <th className="py-1 px-2 border-r border-slate-700 text-center w-24">Share %</th>
+                      <th className="py-1 px-2">Assigned &amp; Serving Staff Members</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-300">
+                    {Array.from(tableSummaryMap.entries()).map(([tableNo, val], idx) => {
+                      const sharePct = totalLDCount > 0 ? ((val.totalLD / totalLDCount) * 100).toFixed(1) : '0.0';
+                      return (
+                        <tr key={tableNo} className={idx % 2 === 1 ? 'bg-slate-50/90' : 'bg-white'}>
+                          <td className="py-1 px-2.5 border-r border-slate-300 font-mono font-bold text-slate-900">
+                            {tableNo}
+                          </td>
+                          <td className="py-1 px-2 border-r border-slate-300 text-center font-mono font-black text-purple-950 bg-purple-50 text-[10.5px]">
+                            {val.totalLD} <span className="text-[8.5px] font-sans font-normal text-purple-700">drinks</span>
+                          </td>
+                          <td className="py-1 px-2 border-r border-slate-300 text-center font-mono text-[9px] text-slate-700">
+                            {sharePct}%
+                          </td>
+                          <td className="py-1 px-2 text-slate-800 text-[9.5px]">
+                            {Array.from(val.staffNames).map((name) => (
+                              <span key={name} className="inline-block mr-1.5 px-1.5 py-0.2 bg-slate-100 rounded text-slate-900 border border-slate-300 text-[9px]">
+                                {name}
+                              </span>
+                            ))}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot className="bg-slate-100 font-bold text-[9.5px] border-t-2 border-slate-900 text-slate-900">
+                    <tr>
+                      <td className="py-1 px-2.5 border-r border-slate-300">TABLE TOTALS</td>
+                      <td className="py-1 px-2 border-r border-slate-300 text-center font-mono text-[11px] text-purple-950 font-black bg-purple-100">
+                        {totalLDCount} drinks
+                      </td>
+                      <td className="py-1 px-2 border-r border-slate-300 text-center font-mono">100.0%</td>
+                      <td className="py-1 px-2 text-slate-600 text-[9px]">{tableSummaryMap.size} Active Tables Served</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            ) : (
+              <div className="border border-dashed border-slate-300 rounded p-3 text-center text-xs text-slate-500 bg-slate-50">
+                No Table LD records registered for this business day.
+              </div>
+            )}
+          </div>
+
+          {/* Section 3: Detailed Timestamped LD Order Timeline (Full Transaction Log) */}
+          <div className="flex-1 min-h-0 flex flex-col justify-start my-2">
+            <div className="flex justify-between items-center border-b border-slate-900 pb-1 mb-1.5 shrink-0">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-purple-700" />
+                <span>3. Detailed LD Transaction Log ({ldLogs.length} Logged Entries)</span>
+              </h3>
+              <span className="text-[10px] font-semibold text-slate-600">
+                Real-time chronological audit trail
+              </span>
+            </div>
+
+            <div className="w-full overflow-hidden border border-slate-900 rounded flex-1 max-h-[85mm] overflow-y-auto">
+              {ldLogs.length > 0 ? (
+                <table className="w-full text-left border-collapse text-[9.5px]">
+                  <thead className="bg-slate-900 text-white font-bold text-[8.5px] uppercase tracking-wider sticky top-0">
+                    <tr>
+                      <th className="py-1 px-1.5 border-r border-slate-700 w-10 text-center">#</th>
+                      <th className="py-1 px-2 border-r border-slate-700 w-24 whitespace-nowrap">Timestamp</th>
+                      <th className="py-1 px-2 border-r border-slate-700 w-16 text-center">Table</th>
+                      <th className="py-1 px-2 border-r border-slate-700 w-36">Staff Name (ID)</th>
+                      <th className="py-1 px-2 border-r border-slate-700 text-center w-20 bg-purple-950 text-purple-200">Amount</th>
+                      <th className="py-1 px-2 border-r border-slate-700">Drink Category</th>
+                      <th className="py-1 px-2 w-20 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-300">
+                    {ldLogs.map((log, lIdx) => (
+                      <tr key={log.id || lIdx} className={lIdx % 2 === 1 ? 'bg-slate-50/90' : 'bg-white'}>
+                        <td className="py-0.5 px-1.5 border-r border-slate-300 font-mono text-center text-slate-500">
+                          {lIdx + 1}
+                        </td>
+                        <td className="py-0.5 px-2 border-r border-slate-300 font-mono text-[8.5px] text-slate-700 whitespace-nowrap">
+                          {log.timestamp.includes(' ') ? log.timestamp.split(' ')[1] : log.timestamp}
+                        </td>
+                        <td className="py-0.5 px-2 border-r border-slate-300 font-mono font-bold text-center text-slate-900">
+                          {log.tableNo}
+                        </td>
+                        <td className="py-0.5 px-2 border-r border-slate-300 font-bold text-slate-900">
+                          {log.staffName} <span className="font-mono font-normal text-slate-500 text-[8px]">({log.staffId})</span>
+                        </td>
+                        <td className="py-0.5 px-2 border-r border-slate-300 font-mono font-black text-center text-purple-950 bg-purple-50/80">
+                          +{log.amount} drink{log.amount > 1 ? 's' : ''}
+                        </td>
+                        <td className="py-0.5 px-2 border-r border-slate-300 text-slate-700 text-[9px]">
+                          {log.drinkType || 'Standard LD'}
+                        </td>
+                        <td className="py-0.5 px-2 text-center text-[8.5px] text-emerald-800 font-semibold">
+                          Recorded
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="p-4 text-center text-xs text-slate-500 bg-slate-50">
+                  No individual drink transaction logs recorded for this date.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Section 4: Handover Remarks & Dual Signatures */}
+          <div className="my-2 pt-2 border-t-2 border-slate-900 space-y-3 shrink-0">
+            {/* Handover & Manager Remarks field */}
+            <div className="border border-slate-300 rounded p-2 bg-slate-50/60">
+              <div className="text-[9.5px] font-bold text-slate-900 uppercase mb-1">
+                Shift Operations Handover &amp; Special Remarks:
+              </div>
+              <div className="h-6 border-b border-dashed border-slate-300 w-full"></div>
+            </div>
+
+            {/* Dual Signature Approvals */}
+            <div className="grid grid-cols-2 gap-10 text-xs text-slate-800 pt-1">
+              <div>
+                <p className="font-bold text-slate-900 mb-6 text-[10.5px]">
+                  Prepared By (Daily Operations Supervisor):
+                </p>
+                <div className="border-b-2 border-slate-900 w-5/6"></div>
+                <div className="flex justify-between text-[9px] text-slate-600 mt-1 w-5/6 font-mono">
+                  <span>Name: _________________</span>
+                  <span>Sign &amp; Date: ___________</span>
+                </div>
+              </div>
+              <div>
+                <p className="font-bold text-slate-900 mb-6 text-[10.5px]">
+                  Approved By (General Manager / Owner):
+                </p>
+                <div className="border-b-2 border-slate-900 w-5/6"></div>
+                <div className="flex justify-between text-[9px] text-slate-600 mt-1 w-5/6 font-mono">
+                  <span>Name: _________________</span>
+                  <span>Sign &amp; Date: ___________</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Page 2 Footer */}
+          <div className="mt-2 pt-1.5 border-t border-slate-300 flex justify-between items-center text-[9px] text-slate-500 font-mono shrink-0">
+            <span>Generated via GLEE ANGELS Management System • Confidential Ledger</span>
+            <span className="font-bold text-slate-700">Page 2 of 2 • (End of Official Daily Report)</span>
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <>
@@ -370,15 +555,25 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
               background: #ffffff !important;
             }
             .daily-report-print-page {
-              height: 281mm !important;
+              min-height: 281mm !important;
               max-height: 281mm !important;
+              height: 281mm !important;
               display: flex !important;
               flex-direction: column !important;
               justify-content: space-between !important;
-              page-break-after: avoid !important;
+              page-break-after: always !important;
+              break-after: page !important;
               page-break-inside: avoid !important;
               break-inside: avoid !important;
               overflow: hidden !important;
+              box-sizing: border-box !important;
+              padding: 22px 28px !important;
+              background-color: #ffffff !important;
+              color: #0f172a !important;
+            }
+            .daily-report-print-page:last-child {
+              page-break-after: avoid !important;
+              break-after: avoid !important;
             }
           }
         `}
@@ -811,10 +1006,10 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                 <Building2 className="w-5 h-5 text-purple-400" />
                 <div>
                   <h3 className="text-sm font-bold text-slate-100">
-                    PDF Document Form Preview (A4 Single Page)
+                    PDF Document Form Preview (A4 2-Page Executive Report)
                   </h3>
                   <p className="text-[11px] text-slate-400">
-                    Official Executive Daily Report 1-Page Printable Format
+                    Official Executive Daily Report • 2-Page Portrait Printable Format (Complete LD Audit Log)
                   </p>
                 </div>
               </div>
@@ -848,8 +1043,8 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
             </div>
 
             {/* Document Body inside Modal */}
-            <div className="p-4 sm:p-6 bg-slate-200 overflow-y-auto flex-1 flex justify-center">
-              <div className="w-full max-w-[210mm] shadow-2xl rounded-sm overflow-hidden bg-white">
+            <div className="p-4 sm:p-6 bg-slate-300 overflow-y-auto flex-1 flex flex-col items-center gap-6">
+              <div className="w-full max-w-[210mm]">
                 {renderPrintableReportSheet()}
               </div>
             </div>
@@ -876,7 +1071,7 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
       </div>
 
       {/* Dedicated Hidden Print Page Container (Only visible during @media print) */}
-      <div className="hidden print:flex daily-report-print-page bg-white text-black font-sans p-0 m-0 w-full">
+      <div className="hidden print:block w-full p-0 m-0">
         {renderPrintableReportSheet()}
       </div>
     </>
