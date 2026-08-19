@@ -145,8 +145,247 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
     window.print();
   };
 
+  const renderPrintableReportSheet = () => (
+    <div className="bg-white text-slate-900 font-sans p-6 sm:p-7 flex flex-col justify-between h-full w-full max-w-[210mm] mx-auto box-border select-text">
+      {/* 1. Header */}
+      <div className="border-b-2 border-slate-900 pb-2 flex justify-between items-end shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-purple-900 flex items-center justify-center text-white border border-purple-700">
+            <Wine className="w-5 h-5 text-purple-200" />
+          </div>
+          <div>
+            <h1 className="text-xl font-black tracking-wider text-slate-900 uppercase leading-tight">
+              GLEE ANGELS
+            </h1>
+            <p className="text-[11px] text-slate-700 font-bold tracking-wide uppercase">
+              Official Daily Attendance &amp; LD Sales Report
+            </p>
+          </div>
+        </div>
+
+        <div className="text-right text-[10.5px] text-slate-700 space-y-0.5 border-l-2 pl-3 border-slate-300 font-medium">
+          <div><strong className="text-slate-900">Date:</strong> <span className="font-mono font-bold text-slate-900 text-[11px]">{dateStr}</span></div>
+          <div><strong className="text-slate-900">Doc ID:</strong> <span className="font-mono">GAR-{dateStr.replace(/-/g, '')}-01</span></div>
+          <div className="text-[9.5px] text-slate-500 font-mono">Generated: {new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</div>
+        </div>
+      </div>
+
+      {/* 2. Executive KPI Grid (6 metrics in 1 neat row) */}
+      <div className="my-2 grid grid-cols-6 gap-1.5 text-center border-2 border-slate-900 rounded-lg p-1.5 bg-slate-50 shrink-0">
+        <div className="border-r border-slate-300 pr-1">
+          <div className="text-[8.5px] text-slate-500 font-bold uppercase tracking-wider">Total LD Sales</div>
+          <div className="text-base font-black text-purple-900 font-mono leading-tight">{totalLDCount}</div>
+        </div>
+        <div className="border-r border-slate-300 px-1">
+          <div className="text-[8.5px] text-slate-500 font-bold uppercase tracking-wider">Working Staff</div>
+          <div className="text-base font-black text-slate-900 font-mono leading-tight">{workingStaffCount}</div>
+        </div>
+        <div className="border-r border-slate-300 px-1">
+          <div className="text-[8.5px] text-slate-500 font-bold uppercase tracking-wider">On Time</div>
+          <div className="text-base font-black text-emerald-700 font-mono leading-tight">{presentCount}</div>
+        </div>
+        <div className="border-r border-slate-300 px-1">
+          <div className="text-[8.5px] text-slate-500 font-bold uppercase tracking-wider">Late</div>
+          <div className="text-base font-black text-amber-700 font-mono leading-tight">{lateCount}</div>
+        </div>
+        <div className="border-r border-slate-300 px-1">
+          <div className="text-[8.5px] text-slate-500 font-bold uppercase tracking-wider">Absent</div>
+          <div className="text-base font-black text-rose-700 font-mono leading-tight">{absentCount}</div>
+        </div>
+        <div className="pl-1">
+          <div className="text-[8.5px] text-slate-500 font-bold uppercase tracking-wider">Day Off / Susp.</div>
+          <div className="text-base font-black text-sky-700 font-mono leading-tight">{dayOffCount + suspendedCount}</div>
+        </div>
+      </div>
+
+      {/* 3. Section 1: Staff Attendance & LD Matrix (High density, crisp) */}
+      <div className="flex-1 min-h-0 flex flex-col justify-start">
+        <div className="flex justify-between items-center border-b border-slate-900 pb-0.5 mb-1 shrink-0">
+          <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5 text-purple-700" />
+            <span>1. Staff Attendance &amp; LD Sales Summary</span>
+          </h3>
+          <span className="text-[9.5px] font-semibold text-slate-600">
+            Total Staff: {staffList.length} (On Duty: {workingStaffCount})
+          </span>
+        </div>
+
+        <div className="w-full overflow-hidden border border-slate-900 rounded">
+          <table className="w-full text-left border-collapse text-[9.5px]">
+            <thead className="bg-slate-900 text-white font-bold text-[8.5px] uppercase tracking-wider">
+              <tr>
+                <th className="py-1 px-1.5 border-r border-slate-700 w-14 text-center">ID</th>
+                <th className="py-1 px-2 border-r border-slate-700 w-28">Name</th>
+                <th className="py-1 px-2 border-r border-slate-700">Role</th>
+                <th className="py-1 px-1.5 border-r border-slate-700 text-center w-20">Status</th>
+                <th className="py-1 px-2 border-r border-slate-700 whitespace-nowrap">Working Time</th>
+                <th className="py-1 px-1.5 border-r border-slate-700 text-center w-14 bg-purple-950 text-purple-200 font-black">Total LD</th>
+                <th className="py-1 px-2">Assigned Tables &amp; Notes</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-300">
+              {staffSummaryList.map((item, idx) => (
+                <tr key={item.staff.id} className={idx % 2 === 1 ? 'bg-slate-50/90' : 'bg-white'}>
+                  <td className="py-0.5 px-1.5 border-r border-slate-300 font-mono text-[8.5px] text-center font-bold text-slate-700">
+                    {item.staff.id}
+                  </td>
+                  <td className="py-0.5 px-2 border-r border-slate-300 font-bold text-slate-900 whitespace-nowrap">
+                    {item.staff.name}
+                  </td>
+                  <td className="py-0.5 px-2 border-r border-slate-300 text-slate-700 text-[9px] truncate max-w-[130px]">
+                    {item.staff.role}
+                  </td>
+                  <td className="py-0.5 px-1.5 border-r border-slate-300 text-center whitespace-nowrap">
+                    {item.statusType === 'suspended' ? (
+                      <span className="inline-block px-1.5 py-0.2 rounded text-[8px] font-bold bg-orange-100 text-orange-900 border border-orange-300 uppercase">
+                        Suspended
+                      </span>
+                    ) : item.statusType === 'dayoff' ? (
+                      <span className="inline-block px-1.5 py-0.2 rounded text-[8px] font-bold bg-sky-100 text-sky-900 border border-sky-300 uppercase">
+                        Day Off
+                      </span>
+                    ) : item.statusType === 'absent' ? (
+                      <span className="inline-block px-1.5 py-0.2 rounded text-[8px] font-bold bg-rose-100 text-rose-900 border border-rose-300 uppercase">
+                        Absent
+                      </span>
+                    ) : item.statusType === 'late' ? (
+                      <span className="inline-block px-1.5 py-0.2 rounded text-[8px] font-bold bg-amber-100 text-amber-900 border border-amber-300 uppercase">
+                        Late
+                      </span>
+                    ) : item.statusType === 'present' ? (
+                      <span className="inline-block px-1.5 py-0.2 rounded text-[8px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 uppercase">
+                        On Time
+                      </span>
+                    ) : (
+                      <span className="inline-block px-1.5 py-0.2 rounded text-[8px] font-semibold bg-slate-100 text-slate-600 border border-slate-300 uppercase">
+                        Pending
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-0.5 px-2 border-r border-slate-300 font-mono text-[8.5px] text-slate-800 whitespace-nowrap">
+                    {item.att?.checkInTime ? (
+                      <span>
+                        {item.att.checkInTime} ~ {item.att.checkOutTime || 'Working'}
+                        {item.att.checkOutTime && (
+                          <span className="ml-1 text-slate-600 font-sans font-bold">
+                            ({calculateWorkingTime(item.att.checkInTime, item.att.checkOutTime)})
+                          </span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">{item.staff.defaultSchedule || '-'}</span>
+                    )}
+                  </td>
+                  <td className="py-0.5 px-1.5 border-r border-slate-300 text-center font-bold font-mono text-[9.5px] bg-purple-50 text-purple-900">
+                    {item.totalLD > 0 ? (
+                      <span className="font-black text-purple-900">{item.totalLD}</span>
+                    ) : (
+                      <span className="text-slate-300">-</span>
+                    )}
+                  </td>
+                  <td className="py-0.5 px-2 text-[8.5px] text-slate-700">
+                    {item.assignedTables.length > 0 && (
+                      <span className="font-mono font-bold text-indigo-900 mr-1.5">
+                        [{item.assignedTables.join(', ')}]
+                      </span>
+                    )}
+                    {item.att?.note ? (
+                      <span className="italic text-slate-600">{item.att.note}</span>
+                    ) : !item.assignedTables.length ? (
+                      <span className="text-slate-300">-</span>
+                    ) : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 4. Section 2: Table Breakdown (Clean Compact Grid) */}
+      <div className="my-2 shrink-0">
+        <div className="flex justify-between items-center border-b border-slate-900 pb-0.5 mb-1">
+          <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+            <Wine className="w-3.5 h-3.5 text-cyan-700" />
+            <span>2. Table LD Breakdown</span>
+          </h3>
+          <span className="text-[9.5px] text-slate-600 font-semibold">
+            Active Tables: {tableSummaryMap.size}
+          </span>
+        </div>
+
+        {tableSummaryMap.size > 0 ? (
+          <div className="grid grid-cols-4 gap-1.5 text-[9px]">
+            {Array.from(tableSummaryMap.entries()).map(([tableNo, val]) => (
+              <div key={tableNo} className="border border-slate-300 rounded p-1 bg-slate-50 flex justify-between items-center">
+                <span className="font-bold font-mono text-slate-900">{tableNo}</span>
+                <span className="font-mono font-black text-purple-900">{val.totalLD} drinks</span>
+                <span className="text-[8px] text-slate-600 truncate max-w-[65px]" title={Array.from(val.staffNames).join(', ')}>
+                  {Array.from(val.staffNames).join(', ')}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="border border-dashed border-slate-300 rounded p-1 text-center text-[9px] text-slate-400 bg-slate-50/50">
+            No Table LD records for this date.
+          </div>
+        )}
+      </div>
+
+      {/* 5. Signature & Approval Block */}
+      <div className="pt-2 border-t-2 border-slate-900 grid grid-cols-2 gap-12 text-xs text-slate-800 shrink-0">
+        <div>
+          <p className="font-bold text-slate-900 mb-5 text-[10px]">Prepared By (Supervisor):</p>
+          <div className="border-b border-slate-400 w-4/5"></div>
+          <p className="text-[8.5px] text-slate-500 mt-1 font-mono">Signature &amp; Date</p>
+        </div>
+        <div>
+          <p className="font-bold text-slate-900 mb-5 text-[10px]">Approved By (Manager / Owner):</p>
+          <div className="border-b border-slate-400 w-4/5"></div>
+          <p className="text-[8.5px] text-slate-500 mt-1 font-mono">Signature &amp; Date</p>
+        </div>
+      </div>
+
+      {/* 6. Footer Watermark */}
+      <div className="mt-1 pt-1 border-t border-slate-200 flex justify-between items-center text-[8.5px] text-slate-400 font-mono shrink-0">
+        <span>Generated via GLEE ANGELS Management System</span>
+        <span>Page 1 of 1</span>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <>
+      <style type="text/css">
+        {`
+          @media print {
+            @page { 
+              size: A4 portrait; 
+              margin: 8mm 10mm; 
+            }
+            body { 
+              -webkit-print-color-adjust: exact !important; 
+              print-color-adjust: exact !important; 
+              background: #ffffff !important;
+            }
+            .daily-report-print-page {
+              height: 281mm !important;
+              max-height: 281mm !important;
+              display: flex !important;
+              flex-direction: column !important;
+              justify-content: space-between !important;
+              page-break-after: avoid !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              overflow: hidden !important;
+            }
+          }
+        `}
+      </style>
+
+      {/* Main Interactive Dashboard (Dark Theme - Hidden during Print) */}
+      <div className="space-y-6 animate-fadeIn print:hidden">
       {/* Top Banner & Export Bar */}
       <div className="lounge-card rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border border-pink-900/30">
         <div>
@@ -564,18 +803,18 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
 
       {/* Formal PDF Report Modal Preview */}
       {showPrintModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn overflow-y-auto">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col my-auto overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn overflow-y-auto print:hidden">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[94vh] flex flex-col my-auto overflow-hidden">
             {/* Modal Header Controls (Not Printed) */}
-            <div className="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between no-print">
+            <div className="p-3.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-purple-400" />
                 <div>
-                  <h3 className="text-base font-bold text-slate-100">
-                    PDF Document Form Preview
+                  <h3 className="text-sm font-bold text-slate-100">
+                    PDF Document Form Preview (A4 Single Page)
                   </h3>
-                  <p className="text-xs text-slate-400">
-                    Official Executive Daily Report Printable Format
+                  <p className="text-[11px] text-slate-400">
+                    Official Executive Daily Report 1-Page Printable Format
                   </p>
                 </div>
               </div>
@@ -586,17 +825,17 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
                       setShowPrintModal(false);
                       onNavigateToChecklist();
                     }}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-emerald-950"
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-emerald-950"
                   >
-                    <ClipboardCheck className="w-4 h-4" />
+                    <ClipboardCheck className="w-3.5 h-3.5" />
                     <span>Go to Checklist</span>
                   </button>
                 )}
                 <button
                   onClick={handlePrint}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-purple-950"
+                  className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-purple-950"
                 >
-                  <Printer className="w-4 h-4" />
+                  <Printer className="w-3.5 h-3.5" />
                   <span>Print / Save as PDF</span>
                 </button>
                 <button
@@ -608,209 +847,38 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
               </div>
             </div>
 
-            {/* Document Body (Formatted for crisp paper output & PDF generation) */}
-            <div className="p-6 sm:p-8 bg-white text-slate-900 overflow-y-auto flex-1 space-y-6 font-sans">
-              {/* Document Header & Logo */}
-              <div className="border-b-2 border-slate-900 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Wine className="w-6 h-6 text-purple-700" />
-                    <h1 className="text-xl font-extrabold tracking-wider text-slate-900 uppercase">
-                      GLEE ANGELS
-                    </h1>
-                  </div>
-                  <p className="text-xs text-slate-600 mt-1 font-semibold">
-                    OFFICIAL DAILY ATTENDANCE &amp; LD SALES REPORT
-                  </p>
-                </div>
-
-                <div className="text-right sm:text-right text-xs text-slate-700 space-y-0.5 border-l-2 sm:border-l-0 pl-3 sm:pl-0 border-slate-300">
-                  <div><strong className="text-slate-900">Report Date:</strong> {dateStr}</div>
-                  <div><strong className="text-slate-900">Doc ID:</strong> GAR-{dateStr.replace(/-/g, '')}-01</div>
-                  <div><strong className="text-slate-900">Generated:</strong> {new Date().toLocaleTimeString('ko-KR')}</div>
-                </div>
-              </div>
-
-              {/* Executive Summary Cards in PDF */}
-              <div className="grid grid-cols-6 gap-2 text-center border border-slate-300 rounded-lg p-2.5 bg-slate-50">
-                <div className="border-r border-slate-300 pr-1">
-                  <div className="text-[9px] text-slate-500 font-bold uppercase">Total LD Sales</div>
-                  <div className="text-base font-black text-slate-900 font-mono">{totalLDCount}</div>
-                </div>
-                <div className="border-r border-slate-300 px-1">
-                  <div className="text-[9px] text-slate-500 font-bold uppercase">Working</div>
-                  <div className="text-base font-black text-slate-900 font-mono">{workingStaffCount}</div>
-                </div>
-                <div className="border-r border-slate-300 px-1">
-                  <div className="text-[9px] text-slate-500 font-bold uppercase">Late</div>
-                  <div className="text-base font-black text-amber-800 font-mono">{lateCount}</div>
-                </div>
-                <div className="border-r border-slate-300 px-1">
-                  <div className="text-[9px] text-slate-500 font-bold uppercase">Absent</div>
-                  <div className="text-base font-black text-rose-800 font-mono">{absentCount}</div>
-                </div>
-                <div className="border-r border-slate-300 px-1">
-                  <div className="text-[9px] text-slate-500 font-bold uppercase">Day Off</div>
-                  <div className="text-base font-black text-sky-800 font-mono">{dayOffCount}</div>
-                </div>
-                <div className="pl-1">
-                  <div className="text-[9px] text-slate-500 font-bold uppercase">Suspended</div>
-                  <div className="text-base font-black text-orange-800 font-mono">{suspendedCount}</div>
-                </div>
-              </div>
-
-              {/* Section 1: Staff Attendance Matrix */}
-              <div className="space-y-2">
-                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-300 pb-1 flex items-center gap-1.5">
-                  <Users className="w-4 h-4 text-purple-700" />
-                  <span>1. Staff Attendance &amp; LD Sales Summary</span>
-                </h3>
-
-                <table className="w-full text-left text-xs border border-slate-300 border-collapse">
-                  <thead className="bg-slate-100 text-slate-800 font-bold text-[10px] uppercase border-b border-slate-300">
-                    <tr>
-                      <th className="p-2 border border-slate-300">Staff ID</th>
-                      <th className="p-2 border border-slate-300">Name</th>
-                      <th className="p-2 border border-slate-300">Status</th>
-                      <th className="p-2 border border-slate-300 whitespace-nowrap">Working Time</th>
-                      <th className="p-2 border border-slate-300 text-center bg-purple-50 font-black">Total LD</th>
-                      <th className="p-2 border border-slate-300">Assigned Tables</th>
-                      <th className="p-2 border border-slate-300">Notes</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {groupedStaffSummary.map(([role, roleRecords]) => (
-                      <React.Fragment key={role}>
-                        <tr className="bg-slate-100">
-                          <td colSpan={7} className="p-2 border border-slate-300 font-bold text-slate-800 uppercase text-[11px] bg-slate-100">
-                            {role}
-                          </td>
-                        </tr>
-                        {roleRecords.map((item) => (
-                      <tr key={item.staff.id} className="text-slate-800">
-                        <td className="p-2 border border-slate-300 font-mono text-[11px]">{item.staff.id}</td>
-                        <td className="p-2 border border-slate-300 font-bold">{item.staff.name}</td>
-                        <td className="p-2 border border-slate-300">
-                          {item.statusType === 'suspended' ? (
-                            <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-900 border border-orange-300 uppercase">
-                              Suspended
-                            </span>
-                          ) : item.statusType === 'dayoff' ? (
-                            <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold bg-sky-100 text-sky-900 border border-sky-300 uppercase">
-                              Day Off
-                            </span>
-                          ) : item.statusType === 'absent' ? (
-                            <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-100 text-rose-900 border border-rose-300 uppercase">
-                              Absent
-                            </span>
-                          ) : item.statusType === 'late' ? (
-                            <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-900 border border-amber-300 uppercase">
-                              Late
-                            </span>
-                          ) : item.statusType === 'present' ? (
-                            <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 uppercase">
-                              On Time
-                            </span>
-                          ) : item.statusType === 'pending' ? (
-                            <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-slate-100 text-slate-700 border border-slate-300 uppercase">
-                              Pending
-                            </span>
-                          ) : (
-                            <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-slate-100 text-slate-700 border border-slate-300 uppercase">
-                              Unregistered
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-2 border border-slate-300 font-mono text-[11px] whitespace-nowrap">
-                          {item.att?.checkInTime ? (
-                            <>
-                              {item.att.checkInTime} ~ {item.att.checkOutTime || 'Working'}
-                              {item.att.checkOutTime && (
-                                <span className="ml-1 text-slate-500">
-                                  ({calculateWorkingTime(item.att.checkInTime, item.att.checkOutTime)})
-                                </span>
-                              )}
-                            </>
-                          ) : '-'}
-                        </td>
-                        <td className="p-2 border border-slate-300 text-center font-bold font-mono bg-purple-50 text-purple-900">
-                          {item.totalLD}
-                        </td>
-                        <td className="p-2 border border-slate-300 font-mono text-[11px]">
-                          {item.assignedTables.length > 0 ? item.assignedTables.join(', ') : '-'}
-                        </td>
-                        <td className="p-2 border border-slate-300 text-[11px] text-slate-700 italic">
-                          {item.att?.note || '-'}
-                        </td>
-                      </tr>
-                    ))}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Section 2: Table Breakdown */}
-              <div className="space-y-2">
-                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-300 pb-1 flex items-center gap-1.5">
-                  <Wine className="w-4 h-4 text-cyan-700" />
-                  <span>2. Table LD Breakdown</span>
-                </h3>
-
-                <table className="w-full text-left text-xs border border-slate-300 border-collapse">
-                  <thead className="bg-slate-100 text-slate-800 font-bold text-[10px] uppercase border-b border-slate-300">
-                    <tr>
-                      <th className="p-2 border border-slate-300">Table No</th>
-                      <th className="p-2 border border-slate-300 text-center font-black">LD Count</th>
-                      <th className="p-2 border border-slate-300">Assigned Staff</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {Array.from(tableSummaryMap.entries()).map(([tableNo, val]) => (
-                      <tr key={tableNo} className="text-slate-800">
-                        <td className="p-2 border border-slate-300 font-bold font-mono">{tableNo}</td>
-                        <td className="p-2 border border-slate-300 text-center font-bold font-mono">{val.totalLD} drinks</td>
-                        <td className="p-2 border border-slate-300">{Array.from(val.staffNames).join(', ')}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Signature Approval Block */}
-              <div className="pt-8 border-t border-slate-300 grid grid-cols-2 gap-8 text-xs text-slate-700">
-                <div>
-                  <p className="font-bold text-slate-900 mb-8">Prepared By (Supervisor):</p>
-                  <div className="border-b border-slate-400 w-3/4"></div>
-                  <p className="text-[10px] text-slate-500 mt-1">Signature &amp; Date</p>
-                </div>
-                <div>
-                  <p className="font-bold text-slate-900 mb-8">Approved By (Manager / Owner):</p>
-                  <div className="border-b border-slate-400 w-3/4"></div>
-                  <p className="text-[10px] text-slate-500 mt-1">Signature &amp; Date</p>
-                </div>
+            {/* Document Body inside Modal */}
+            <div className="p-4 sm:p-6 bg-slate-200 overflow-y-auto flex-1 flex justify-center">
+              <div className="w-full max-w-[210mm] shadow-2xl rounded-sm overflow-hidden bg-white">
+                {renderPrintableReportSheet()}
               </div>
             </div>
 
             {/* Modal Footer Controls */}
-            <div className="p-3 bg-slate-950 border-t border-slate-800 flex justify-end gap-2 no-print">
+            <div className="p-2.5 bg-slate-950 border-t border-slate-800 flex justify-end gap-2 shrink-0">
               <button
                 onClick={() => setShowPrintModal(false)}
-                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg"
+                className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg"
               >
                 Close Preview
               </button>
               <button
                 onClick={handlePrint}
-                className="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5"
+                className="px-3.5 py-1 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5"
               >
-                <Printer className="w-4 h-4" />
+                <Printer className="w-3.5 h-3.5" />
                 <span>Print Document</span>
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+      </div>
+
+      {/* Dedicated Hidden Print Page Container (Only visible during @media print) */}
+      <div className="hidden print:flex daily-report-print-page bg-white text-black font-sans p-0 m-0 w-full">
+        {renderPrintableReportSheet()}
+      </div>
+    </>
   );
 };

@@ -100,97 +100,41 @@
 @media print {
   @page {
     size: A4 portrait;
-    margin: 12mm;
+    margin: 8mm 10mm;
   }
 
-  body {
+  html, body {
     background-color: #ffffff !important;
     color: #0f172a !important;
-    font-family: Arial, Helvetica, sans-serif !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
   }
 
-  /* Hide app navigation headers, buttons, background elements during print */
+  /* Hide app navigation headers, footers, interactive elements during print */
   header,
+  footer,
   .no-print,
-  button,
-  input,
-  select {
+  .print\:hidden {
     display: none !important;
   }
 
-  /* Force print view containers to white background with dark text */
-  .lounge-card, .postit-card {
-    background: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    color: #0f172a !important;
+  .print\:flex {
+    display: flex !important;
   }
 
-  /* Ensure text colors are dark and legible for print */
-  .text-slate-100, .text-slate-200, .text-slate-300, .text-slate-400, .text-white {
-    color: #0f172a !important;
+  .print\:block {
+    display: block !important;
   }
 
-  .text-cyan-300, .text-cyan-400 {
-    color: #0891b2 !important;
-  }
-
-  .text-purple-300, .text-purple-400 {
-    color: #7e22ce !important;
-  }
-
-  .text-amber-300, .text-amber-400 {
-    color: #d97706 !important;
-  }
-
-  .text-pink-300, .text-pink-400 {
-    color: #be185d !important;
-  }
-
-  .text-emerald-300, .text-emerald-400 {
-    color: #047857 !important;
-  }
-
-  .text-rose-300, .text-rose-400 {
-    color: #be123c !important;
-  }
-
-  .text-orange-300, .text-orange-400 {
-    color: #c2410c !important;
-  }
-
-  .bg-slate-900, .bg-slate-950, .bg-slate-900\/80, .bg-slate-950\/80 {
-    background-color: #f8fafc !important;
-    border-color: #e2e8f0 !important;
-  }
-
-  table {
-    border-collapse: collapse !important;
-    width: 100% !important;
-  }
-
-  th {
-    background-color: #f1f5f9 !important;
-    color: #1e293b !important;
-    border: 1px solid #cbd5e1 !important;
-  }
-
-  td {
-    border: 1px solid #e2e8f0 !important;
-    color: #334155 !important;
-  }
-
-  /* Prevent awkward page break inside cards & tables */
+  /* Prevent awkward page breaks */
   .break-inside-avoid {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
-  }
-
-  .print-only {
-    display: block !important;
   }
 }
 
