@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DailyChecklist } from '../types';
 import { getChecklistForDate, saveChecklistForDate } from '../utils/storage';
 import { CHECKLIST_ITEMS } from '../data/checklist';
-import { Save, Printer, ClipboardCheck, Edit3, FileDown } from 'lucide-react';
+import { Save, Printer, ClipboardCheck, Edit3, FileDown, FileText, Building2, X } from 'lucide-react';
 
 interface ChecklistTabProps {
   dateStr: string;
@@ -16,6 +16,7 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
     updatedAt: new Date().toISOString(),
   });
   const [isSaved, setIsSaved] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
   useEffect(() => {
     setChecklist(getChecklistForDate(dateStr));
@@ -72,6 +73,8 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
           }
         `}
       </style>
+      
+      {/* Header and Controls */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 print:hidden">
         <div>
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -84,26 +87,18 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <button
-            onClick={handlePrint}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-lg font-semibold transition-colors"
+            onClick={() => setShowPrintModal(true)}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border border-emerald-400/30 px-4 py-2 rounded-lg font-semibold transition-all shadow-lg shadow-emerald-950/50"
           >
-            <Printer className="w-4 h-4" />
-            <span>Print</span>
-          </button>
-          <button
-            onClick={handlePrint}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-blue-900/60 hover:bg-blue-800/80 text-blue-200 border border-blue-700/50 px-4 py-2 rounded-lg font-semibold transition-colors"
-            title="Download as PDF using Print dialog"
-          >
-            <FileDown className="w-4 h-4" />
-            <span>PDF</span>
+            <FileText className="w-4 h-4 text-emerald-200" />
+            <span>PDF Form Preview</span>
           </button>
           <button
             onClick={handleSave}
             className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors ${
               isSaved
-                ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                : 'bg-purple-600 hover:bg-purple-500 text-white'
+                ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                : 'bg-indigo-600 hover:bg-indigo-500 text-white'
             }`}
           >
             <Save className="w-4 h-4" />
@@ -112,71 +107,48 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
         </div>
       </div>
 
-      <div className="lounge-card rounded-xl border border-slate-800 overflow-hidden bg-[#0f172a] print:border-none print:shadow-none print:bg-white print:text-black">
-        <div className="hidden print:block p-4 border-b-2 border-slate-900 pb-2 mb-4">
-          <h1 className="text-2xl font-black text-center text-slate-900 uppercase tracking-tight">
-            Checklist (Closing Time)
-          </h1>
-          <h2 className="text-lg font-bold text-center text-slate-700 mt-1">
-            First Floor / Second Floor
-          </h2>
-          <div className="mt-4 flex justify-between items-end border-b border-slate-300 pb-1">
-            <div className="text-sm font-bold text-slate-600">
-              DATE: <span className="text-black ml-2 text-base">{dateStr}</span>
-            </div>
-            <div className="text-[10px] text-slate-500 font-mono">
-              Generated via Lounge Management System
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 sm:p-6 print:p-0">
+      {/* Main Interactive Checklist (Dark Theme) */}
+      <div className="lounge-card rounded-xl border border-slate-800 overflow-hidden bg-[#0f172a] print:hidden">
+        <div className="p-4 sm:p-6">
           <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse print:border print:border-black">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-700/50 print:border-black print:bg-slate-100">
-                  <th className="py-3 px-4 font-bold text-slate-300 print:text-black print:border-r print:border-black print:py-1 print:text-sm">
+                <tr className="border-b border-slate-700/50">
+                  <th className="py-3 px-4 font-bold text-slate-300">
                     Task Description
                   </th>
-                  <th className="py-3 px-4 font-bold text-slate-300 text-center w-32 print:text-black print:py-1 print:text-sm">
+                  <th className="py-3 px-4 font-bold text-slate-300 text-center w-32">
                     Status
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/50 print:divide-black">
+              <tbody className="divide-y divide-slate-800/50">
                 {CHECKLIST_ITEMS.map((item, index) => {
                   const isChecked = checklist.checkedItems.includes(item);
                   return (
                     <tr 
                       key={index} 
-                      className={`group transition-colors print:border-b print:border-black ${isChecked ? 'bg-purple-900/10' : 'hover:bg-slate-800/30'}`}
+                      className={`group transition-colors ${isChecked ? 'bg-indigo-900/10' : 'hover:bg-slate-800/30'}`}
                     >
-                      <td className="py-3 px-4 print:py-[5px] print:border-r print:border-black">
+                      <td className="py-3 px-4">
                         <label 
                           htmlFor={`check-${index}`}
                           className="flex items-center gap-3 cursor-pointer select-none"
                         >
-                          <span className={`text-sm sm:text-base print:text-xs font-medium ${isChecked ? 'text-purple-300 print:text-black' : 'text-slate-300 print:text-slate-700'}`}>
+                          <span className={`text-sm sm:text-base font-medium ${isChecked ? 'text-indigo-300' : 'text-slate-300'}`}>
                             {item}
                           </span>
                         </label>
                       </td>
-                      <td className="py-3 px-4 text-center print:py-[5px]">
-                        <div className="flex justify-center print:hidden">
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex justify-center">
                           <input
                             type="checkbox"
                             id={`check-${index}`}
                             checked={isChecked}
                             onChange={() => handleToggleItem(item)}
-                            className="w-5 h-5 rounded border-slate-600 text-purple-600 focus:ring-purple-500 focus:ring-offset-slate-900 bg-slate-800 cursor-pointer"
+                            className="w-5 h-5 rounded border-slate-600 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-900 bg-slate-800 cursor-pointer"
                           />
-                        </div>
-                        <div className="hidden print:flex justify-center items-center h-full">
-                          {isChecked ? (
-                            <span className="text-lg font-bold text-black leading-none">✓</span>
-                          ) : (
-                            <span className="text-slate-300 leading-none">-</span>
-                          )}
                         </div>
                       </td>
                     </tr>
@@ -186,20 +158,180 @@ export function ChecklistTab({ dateStr }: ChecklistTabProps) {
             </table>
           </div>
 
-          <div className="mt-8 print:mt-4 print:border print:border-black">
-            <div className="flex items-center gap-2 mb-3 print:bg-slate-100 print:border-b print:border-black print:p-1 print:mb-0">
-              <Edit3 className="w-5 h-5 text-purple-400 print:hidden" />
-              <h3 className="text-lg font-bold text-slate-200 print:text-black print:text-center print:w-full print:text-sm print:uppercase">Remarks</h3>
+          <div className="mt-8">
+            <div className="flex items-center gap-2 mb-3">
+              <Edit3 className="w-5 h-5 text-indigo-400" />
+              <h3 className="text-lg font-bold text-slate-200">Remarks</h3>
             </div>
             <textarea
               value={checklist.remarks}
               onChange={handleRemarksChange}
               placeholder="Add any remarks or issues noticed during closing..."
-              className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-4 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 resize-y min-h-[120px] print:hidden"
+              className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-4 text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-y min-h-[120px]"
             />
-            <div className="hidden print:block p-3 min-h-[60px] text-black whitespace-pre-wrap text-sm">
-              {checklist.remarks || <span className="text-transparent">.</span>}
+          </div>
+        </div>
+      </div>
+
+      {/* Formal PDF Report Modal Preview */}
+      {showPrintModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn overflow-y-auto print:hidden">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col my-auto overflow-hidden">
+            
+            {/* Modal Header Controls (Not Printed) */}
+            <div className="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between no-print">
+              <div className="flex items-center gap-2">
+                <ClipboardCheck className="w-5 h-5 text-emerald-400" />
+                <div>
+                  <h3 className="text-base font-bold text-slate-100">
+                    PDF Checklist Preview
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Official Printable Checklist Format
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePrint}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-emerald-950"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Print / Save as PDF</span>
+                </button>
+                <button
+                  onClick={() => setShowPrintModal(false)}
+                  className="p-1.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
+
+            {/* Document Body (Formatted for crisp paper output & PDF generation) */}
+            <div className="p-6 sm:p-8 bg-white text-slate-900 overflow-y-auto flex-1 font-sans">
+              <div className="border-b-2 border-slate-900 pb-2 mb-4">
+                <h1 className="text-2xl font-black text-center text-slate-900 uppercase tracking-tight">
+                  Checklist (Closing Time)
+                </h1>
+                <h2 className="text-lg font-bold text-center text-slate-700 mt-1">
+                  First Floor / Second Floor
+                </h2>
+                <div className="mt-4 flex justify-between items-end border-b border-slate-300 pb-1">
+                  <div className="text-sm font-bold text-slate-600">
+                    DATE: <span className="text-black ml-2 text-base">{dateStr}</span>
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-mono">
+                    Generated via Lounge Management System
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <table className="w-full text-left border-collapse border border-black">
+                  <thead>
+                    <tr className="bg-slate-100 border-b border-black">
+                      <th className="font-bold text-black border-r border-black py-1 px-4 text-sm">
+                        Task Description
+                      </th>
+                      <th className="font-bold text-center text-black py-1 px-4 text-sm w-24">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-black">
+                    {CHECKLIST_ITEMS.map((item, index) => {
+                      const isChecked = checklist.checkedItems.includes(item);
+                      return (
+                        <tr key={index}>
+                          <td className="py-[5px] px-4 border-r border-black text-black font-medium text-xs">
+                            {item}
+                          </td>
+                          <td className="py-[5px] px-4 text-center">
+                            {isChecked ? (
+                              <span className="text-lg font-bold text-black leading-none">✓</span>
+                            ) : (
+                              <span className="text-slate-300 leading-none">-</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-4 border border-black">
+                <div className="bg-slate-100 border-b border-black p-1">
+                  <h3 className="font-bold text-black text-center w-full text-sm uppercase">Remarks</h3>
+                </div>
+                <div className="p-3 min-h-[60px] text-black whitespace-pre-wrap text-sm">
+                  {checklist.remarks || <span className="text-transparent">.</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden Print Wrapper (Only visible when printing) */}
+      <div className="hidden print:block bg-white text-black font-sans p-0 m-0">
+        <div className="border-b-2 border-black pb-2 mb-4">
+          <h1 className="text-2xl font-black text-center text-black uppercase tracking-tight">
+            Checklist (Closing Time)
+          </h1>
+          <h2 className="text-lg font-bold text-center text-black mt-1">
+            First Floor / Second Floor
+          </h2>
+          <div className="mt-4 flex justify-between items-end border-b border-black pb-1">
+            <div className="text-sm font-bold text-black">
+              DATE: <span className="text-black ml-2 text-base">{dateStr}</span>
+            </div>
+            <div className="text-[10px] text-black font-mono">
+              Generated via Lounge Management System
+            </div>
+          </div>
+        </div>
+
+        <table className="w-full text-left border-collapse border border-black">
+          <thead>
+            <tr className="border-b border-black bg-gray-100">
+              <th className="font-bold text-black border-r border-black py-1 px-4 text-sm">
+                Task Description
+              </th>
+              <th className="font-bold text-center text-black py-1 px-4 text-sm w-24">
+                Status
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-black">
+            {CHECKLIST_ITEMS.map((item, index) => {
+              const isChecked = checklist.checkedItems.includes(item);
+              return (
+                <tr key={index} className="border-b border-black">
+                  <td className="py-[5px] px-4 border-r border-black text-black font-medium text-xs">
+                    {item}
+                  </td>
+                  <td className="py-[5px] px-4 text-center">
+                    {isChecked ? (
+                      <span className="text-lg font-bold text-black leading-none">✓</span>
+                    ) : (
+                      <span className="text-gray-400 leading-none">-</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+
+        <div className="mt-4 border border-black">
+          <div className="bg-gray-100 border-b border-black p-1">
+            <h3 className="font-bold text-black text-center w-full text-sm uppercase">Remarks</h3>
+          </div>
+          <div className="p-3 min-h-[60px] text-black whitespace-pre-wrap text-sm">
+            {checklist.remarks || <span className="text-transparent">.</span>}
           </div>
         </div>
       </div>
