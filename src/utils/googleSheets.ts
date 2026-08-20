@@ -602,11 +602,11 @@ export async function syncAllDataToGoogleSheets(
   
   const batchData = [
     {
-      range: "'Attendance & Hours Ledger'!A1:M10000",
+      range: "'Attendance & Hours Ledger'!A1:Z10000",
       values: [attendanceHeaders, ...attendanceRows],
     },
     {
-      range: "'LD Sales Audit Trail'!A1:J10000",
+      range: "'LD Sales Audit Trail'!A1:Z10000",
       values: [ldHeaders, ...ldRows],
     },
     {
