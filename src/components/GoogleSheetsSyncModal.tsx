@@ -16,6 +16,9 @@ import {
   Link as LinkIcon,
   LogOut,
   X,
+  Copy,
+  Table,
+  HelpCircle,
 } from 'lucide-react';
 import {
   signInWithGoogleAccount,
@@ -25,6 +28,9 @@ import {
   loadGoogleSheetsConfig,
   saveGoogleSheetsConfig,
   logoutGoogleAccount,
+  generateAllTablesCSV,
+  downloadCSV,
+  copyTableToClipboard,
   GoogleSheetsConfig,
 } from '../utils/googleSheets';
 import {
@@ -52,6 +58,7 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [syncProgress, setSyncProgress] = useState<string>('');
+  const [copiedType, setCopiedType] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<{
     success: boolean;
     message: string;
@@ -64,7 +71,7 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
   } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [customSheetId, setCustomSheetId] = useState<string>('');
-  const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
+  const [showDomainGuide, setShowDomainGuide] = useState<boolean>(false);
 
   // Health stats
   const [dbStats, setDbStats] = useState<{
@@ -116,11 +123,15 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
 
       // Automatically create or connect spreadsheet
       const existingId = config?.spreadsheetId || customSheetId;
-      const sheetInfo = await createOrConnectSpreadsheet(accessToken, existingId);
+      await createOrConnectSpreadsheet(accessToken, existingId);
       setConfig(loadGoogleSheetsConfig());
     } catch (err: any) {
       console.error('Google connect error:', err);
-      setErrorMessage(err?.message || 'Failed to authenticate with Google.');
+      const msg = err?.message || 'Failed to authenticate with Google.';
+      setErrorMessage(msg);
+      if (msg.includes('unauthorized-domain') || msg.includes('domain')) {
+        setShowDomainGuide(true);
+      }
     } finally {
       setIsConnecting(false);
     }
@@ -171,7 +182,11 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
       if (onRefreshData) onRefreshData();
     } catch (err: any) {
       console.error('Sync error:', err);
-      setErrorMessage(err?.message || 'Failed to synchronize data with Google Sheets.');
+      const msg = err?.message || 'Failed to synchronize data with Google Sheets.';
+      setErrorMessage(msg);
+      if (msg.includes('unauthorized-domain') || msg.includes('domain')) {
+        setShowDomainGuide(true);
+      }
     } finally {
       setIsSyncing(false);
       setSyncProgress('');
@@ -186,6 +201,25 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
       saveGoogleSheetsConfig({ userEmail: '', userName: '', userPhoto: '' });
       setConfig(loadGoogleSheetsConfig());
     }
+  };
+
+  const handleCopyClipboard = async (type: 'attendance' | 'ld' | 'staff' | 'payroll') => {
+    const success = await copyTableToClipboard(type);
+    if (success) {
+      setCopiedType(type);
+      setTimeout(() => setCopiedType(null), 2500);
+    } else {
+      alert('Failed to copy to clipboard.');
+    }
+  };
+
+  const handleDownloadAllCSV = () => {
+    const csvs = generateAllTablesCSV();
+    const today = new Date().toISOString().slice(0, 10);
+    downloadCSV(csvs.attendanceCSV, `GLEE_ANGELS_Attendance_${today}.csv`);
+    setTimeout(() => downloadCSV(csvs.ldLogsCSV, `GLEE_ANGELS_LD_Sales_${today}.csv`), 300);
+    setTimeout(() => downloadCSV(csvs.staffCSV, `GLEE_ANGELS_Staff_Master_${today}.csv`), 600);
+    setTimeout(() => downloadCSV(csvs.payrollCSV, `GLEE_ANGELS_Payroll_Summary_${today}.csv`), 900);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -255,9 +289,20 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
           {errorMessage && (
             <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl flex items-start gap-3 text-rose-300 text-xs">
               <AlertCircle className="w-5 h-5 shrink-0 text-rose-400 mt-0.5" />
-              <div className="flex-1">
+              <div className="flex-1 space-y-1">
                 <strong className="block font-semibold">Synchronization Alert:</strong>
                 <span>{errorMessage}</span>
+                {showDomainGuide && (
+                  <div className="mt-2 p-2.5 bg-slate-900/90 rounded-lg border border-slate-700 text-slate-300 text-[11px] space-y-1">
+                    <div className="font-semibold text-amber-300 flex items-center gap-1">
+                      <HelpCircle className="w-3.5 h-3.5" />
+                      <span>Firebase Authorized Domain Notice:</span>
+                    </div>
+                    <p>
+                      In dynamic preview environments, you can use the instant <strong>[Export Google Sheets Ready CSV]</strong> or <strong>[Copy Table for Google Sheets]</strong> buttons below with zero authentication needed, or add <code>asia-southeast1.run.app</code> to Firebase Console Authorized Domains.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -281,12 +326,113 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
             </div>
           )}
 
-          {/* Google Account Connection Card */}
+          {/* SECTION 1: 1-Click Instant Google Sheets CSV Exporters (Zero-Auth Required) */}
+          <div className="p-4 bg-gradient-to-br from-emerald-950/40 via-slate-800/80 to-teal-950/40 border border-emerald-500/30 rounded-xl space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                Instant Google Sheets &amp; Excel Exporters (Zero-Auth)
+              </span>
+              <a
+                href="https://sheets.new"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-emerald-300 hover:text-emerald-200 underline flex items-center gap-1"
+              >
+                <span>Open sheets.new</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+
+            <p className="text-xs text-slate-300">
+              Download clean, pre-formatted Google Sheets / Excel CSV tables or copy directly to your clipboard for 1-second pasting (<kbd className="px-1.5 py-0.5 bg-slate-900 border border-slate-700 rounded text-[10px] text-slate-300">Ctrl + V</kbd>).
+            </p>
+
+            {/* Quick Copy to Clipboard Buttons */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+              <button
+                onClick={() => handleCopyClipboard('attendance')}
+                className="py-2 px-2.5 bg-slate-900/90 hover:bg-slate-800 border border-slate-700 hover:border-emerald-500/50 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 text-slate-200"
+              >
+                {copiedType === 'attendance' ? (
+                  <span className="text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Copied!
+                  </span>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Copy Attendance</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => handleCopyClipboard('ld')}
+                className="py-2 px-2.5 bg-slate-900/90 hover:bg-slate-800 border border-slate-700 hover:border-purple-500/50 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 text-slate-200"
+              >
+                {copiedType === 'ld' ? (
+                  <span className="text-purple-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Copied!
+                  </span>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Copy LD Logs</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => handleCopyClipboard('payroll')}
+                className="py-2 px-2.5 bg-slate-900/90 hover:bg-slate-800 border border-slate-700 hover:border-amber-500/50 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 text-slate-200"
+              >
+                {copiedType === 'payroll' ? (
+                  <span className="text-amber-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Copied!
+                  </span>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Copy Payroll</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => handleCopyClipboard('staff')}
+                className="py-2 px-2.5 bg-slate-900/90 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500/50 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 text-slate-200"
+              >
+                {copiedType === 'staff' ? (
+                  <span className="text-cyan-400 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Copied!
+                  </span>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Copy Staff Roster</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* 1-Click Download 4 CSVs Pack */}
+            <div className="pt-1">
+              <button
+                onClick={handleDownloadAllCSV}
+                className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-600 active:scale-[0.99] text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center justify-center gap-2 border border-emerald-400/40"
+              >
+                <Download className="w-4 h-4 text-emerald-200" />
+                <span>Download All 4 Sheets CSV Package (Attendance, LD, Staff, Payroll)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* SECTION 2: Google Account Cloud Synchronization (OAuth) */}
           <div className="p-4 bg-slate-800/60 border border-slate-700/60 rounded-xl space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <Users className="w-4 h-4 text-indigo-400" />
-                Google Workspace Connection
+                Google Workspace Live Cloud Sync
               </span>
               {isSignedIn ? (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
@@ -331,7 +477,7 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
             ) : (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 bg-slate-900/80 border border-slate-700/80 rounded-lg">
                 <div className="text-xs text-slate-300">
-                  Connect your Google account with permission to create and sync payroll spreadsheets in your Google Drive.
+                  Connect your Google account to automatically create and sync payroll spreadsheets in your Google Drive.
                 </div>
                 <button
                   onClick={handleSignInAndConnect}
@@ -352,95 +498,35 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
                 </button>
               </div>
             )}
-          </div>
-
-          {/* Connected Spreadsheet Card */}
-          <div className="p-4 bg-slate-800/60 border border-slate-700/60 rounded-xl space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-                Dedicated Payroll &amp; Attendance Spreadsheet
-              </span>
-              {config?.lastSyncedAt && (
-                <span className="text-[10px] text-slate-400">
-                  Last Synced: <strong className="text-slate-200">{new Date(config.lastSyncedAt).toLocaleTimeString()}</strong>
-                </span>
-              )}
-            </div>
-
-            {config?.spreadsheetUrl ? (
-              <div className="p-3 bg-slate-900/90 border border-emerald-500/30 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div className="space-y-0.5">
-                  <div className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>GLEE ANGELS - Management &amp; Payroll Database</span>
-                  </div>
-                  <div className="text-[11px] text-slate-400 font-mono">
-                    ID: {config.spreadsheetId}
-                  </div>
-                </div>
-                <a
-                  href={config.spreadsheetUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 hover:text-emerald-200 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 shrink-0"
-                >
-                  <span>Open in Google Sheets</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </div>
-            ) : (
-              <div className="p-3 bg-slate-900/50 border border-dashed border-slate-700 rounded-lg text-xs text-slate-400">
-                Clicking the sync button below will automatically create a dedicated 4-sheet spreadsheet formatted with:
-                <div className="grid grid-cols-2 gap-1.5 mt-2 text-[11px] text-slate-300 font-medium">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    1. Attendance &amp; Hours Ledger
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                    2. LD Sales Audit Trail
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-                    3. Staff Master Database
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                    4. Payroll &amp; Monthly Summary
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Sync Action Button */}
-            <div className="pt-2">
+            <div className="pt-1">
               <button
                 onClick={handleSyncToSheets}
                 disabled={isSyncing}
-                className="w-full py-3 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:to-emerald-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-950/50 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-[0.99] text-white font-bold text-xs rounded-xl border border-slate-600 transition flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isSyncing ? (
                   <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
                     <span>{syncProgress || 'Synchronizing with Google Sheets...'}</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4 text-emerald-200" />
-                    <span>1-Click Sync Entire Database to Google Sheets</span>
+                    <Sparkles className="w-4 h-4 text-emerald-300" />
+                    <span>Sync Live to Google Drive Spreadsheet</span>
                   </>
                 )}
               </button>
             </div>
           </div>
 
-          {/* Database Health & File Backup Verification */}
+          {/* SECTION 3: Live Central Firestore & Encrypted JSON Backup */}
           <div className="p-4 bg-slate-800/60 border border-slate-700/60 rounded-xl space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <Database className="w-4 h-4 text-cyan-400" />
-                Live Database Integrity &amp; Backup
+                Live Database Integrity &amp; JSON Backup
               </span>
               <span className="text-[10px] text-cyan-300 font-mono bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/50">
                 Central Firestore DB Active
@@ -494,7 +580,7 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold transition"
+            className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold transition cursor-pointer"
           >
             Close
           </button>

@@ -649,3 +649,246 @@ export async function syncAllDataToGoogleSheets(
     timestamp,
   };
 }
+
+// =========================================================================
+// INSTANT CSV & GOOGLE SHEETS CLIPBOARD EXPORTERS (ZERO-AUTH REQUIRED)
+// =========================================================================
+
+export function generateAllTablesCSV(): {
+  attendanceCSV: string;
+  ldLogsCSV: string;
+  staffCSV: string;
+  payrollCSV: string;
+} {
+  const staffList = loadStaffList();
+  const allAttendance = loadAllAttendance();
+  const allLDLogs = loadAllLDLogs();
+
+  const staffMap = new Map<string, Staff>();
+  staffList.forEach((s) => staffMap.set(s.id, s));
+
+  // 1. Attendance
+  const attHeaders = [
+    'Date',
+    'Staff ID',
+    'Staff Name',
+    'Role',
+    'Status',
+    'Check In',
+    'Check Out',
+    'Worked Hours',
+    'Notes',
+  ];
+  const attRows = allAttendance.map((rec) => {
+    const staff = staffMap.get(rec.staffId);
+    let workHours = '';
+    
+    if (rec.checkInTime && rec.checkOutTime) {
+      workHours = calculateWorkingTime(rec.checkInTime, rec.checkOutTime);
+    }
+    
+    let status = 'Pending';
+    if (rec.isDayOff) status = 'Day Off';
+    else if (rec.isAbsent) status = 'Absent';
+    else if (rec.isSuspended) status = 'Suspended';
+    else if (rec.isLate) status = 'Late';
+    else if (rec.checkInTime) status = 'Present';
+
+    return [
+      rec.date,
+      rec.staffId,
+      staff?.name || rec.staffName || '',
+      staff?.role || '',
+      status,
+      rec.checkInTime || '',
+      rec.checkOutTime || '',
+      workHours,
+      rec.note || '',
+    ];
+  });
+
+  // 2. LD Logs
+  const ldHeaders = [
+    'Date',
+    'Time',
+    'Staff ID',
+    'Staff Name',
+    'Role',
+    'Category',
+    'Quantity',
+    'Table',
+  ];
+  const ldRows = allLDLogs.map((log) => {
+    const staff = staffMap.get(log.staffId);
+    return [
+      log.date,
+      log.timestamp || '',
+      log.staffId,
+      log.staffName || staff?.name || '',
+      staff?.role || '',
+      log.drinkType || 'Standard',
+      log.amount,
+      log.tableNo || '',
+    ];
+  });
+
+  // 3. Staff Master
+  const stfHeaders = [
+    'Staff ID',
+    'Full Name',
+    'Role',
+    'Status',
+    'Default Schedule',
+    'Phone',
+  ];
+  const stfRows = staffList.map((s) => [
+    s.id,
+    s.name,
+    s.role,
+    s.active ? 'Active' : 'Inactive',
+    s.defaultSchedule || '',
+    s.phone || '',
+  ]);
+
+  // 4. Payroll Monthly Summary
+  const summaryMap = new Map<string, any>();
+  allAttendance.forEach((rec) => {
+    if (!rec.date) return;
+    const monthStr = rec.date.slice(0, 7);
+    const key = `${monthStr}_${rec.staffId}`;
+    const staff = staffMap.get(rec.staffId);
+
+    if (!summaryMap.has(key)) {
+      summaryMap.set(key, {
+        monthStr,
+        staffId: rec.staffId,
+        staffName: staff?.name || rec.staffName || 'Staff',
+        role: staff?.role || 'Staff',
+        daysWorked: 0,
+        totalMinutesWorked: 0,
+        dayOffs: 0,
+        absences: 0,
+        lateCount: 0,
+        totalLDs: 0,
+      });
+    }
+
+    const item = summaryMap.get(key)!;
+    if (rec.isDayOff) item.dayOffs += 1;
+    else if (rec.isAbsent) item.absences += 1;
+    else if (rec.checkInTime) item.daysWorked += 1;
+    
+    if (rec.isLate) item.lateCount += 1;
+
+    if (rec.checkInTime && rec.checkOutTime) {
+      const inMin = parseTimeToMinutes(rec.checkInTime);
+      const outMin = parseTimeToMinutes(rec.checkOutTime);
+      if (inMin >= 0 && outMin >= 0) {
+        let diff = outMin - inMin;
+        if (diff < 0) diff += 24 * 60;
+        item.totalMinutesWorked += diff;
+      }
+    }
+  });
+
+  allLDLogs.forEach((log) => {
+    if (!log.date) return;
+    const monthStr = log.date.slice(0, 7);
+    const key = `${monthStr}_${log.staffId}`;
+    if (summaryMap.has(key)) {
+      summaryMap.get(key)!.totalLDs += log.amount;
+    }
+  });
+
+  const payHeaders = [
+    'Month',
+    'Staff ID',
+    'Staff Name',
+    'Role',
+    'Days Worked',
+    'Total Worked Hours',
+    'Decimal Hours',
+    'Late Count',
+    'Day Offs',
+    'Absences',
+    'Total LD Drinks',
+  ];
+  const payRows = Array.from(summaryMap.values()).map((s) => {
+    const hours = Math.floor(s.totalMinutesWorked / 60);
+    const mins = s.totalMinutesWorked % 60;
+    return [
+      s.monthStr,
+      s.staffId,
+      s.staffName,
+      s.role,
+      s.daysWorked,
+      `${hours}h ${mins.toString().padStart(2, '0')}m`,
+      Number((s.totalMinutesWorked / 60).toFixed(2)),
+      s.lateCount,
+      s.dayOffs,
+      s.absences,
+      s.totalLDs,
+    ];
+  });
+
+  const toCSV = (headers: string[], rows: (string | number)[][]) => {
+    const formatCell = (val: string | number) => {
+      const str = String(val ?? '');
+      if (str.includes(',') || str.includes('\n') || str.includes('"')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+    return [
+      headers.map(formatCell).join(','),
+      ...rows.map((r) => r.map(formatCell).join(',')),
+    ].join('\n');
+  };
+
+  return {
+    attendanceCSV: '\uFEFF' + toCSV(attHeaders, attRows),
+    ldLogsCSV: '\uFEFF' + toCSV(ldHeaders, ldRows),
+    staffCSV: '\uFEFF' + toCSV(stfHeaders, stfRows),
+    payrollCSV: '\uFEFF' + toCSV(payHeaders, payRows),
+  };
+}
+
+export function downloadCSV(content: string, filename: string) {
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+export async function copyTableToClipboard(tableType: 'attendance' | 'ld' | 'staff' | 'payroll'): Promise<boolean> {
+  try {
+    const csvs = generateAllTablesCSV();
+    let csvData = '';
+    if (tableType === 'attendance') csvData = csvs.attendanceCSV;
+    else if (tableType === 'ld') csvData = csvs.ldLogsCSV;
+    else if (tableType === 'staff') csvData = csvs.staffCSV;
+    else if (tableType === 'payroll') csvData = csvs.payrollCSV;
+
+    // Convert CSV to Tab-Separated Values (TSV) for direct Google Sheets paste
+    const tsvData = csvData
+      .replace(/^\uFEFF/, '')
+      .split('\n')
+      .map((line) => {
+        // Simple comma to tab for spreadsheet pasting
+        const cells = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(',');
+        return cells.map((c) => c.replace(/^"|"$/g, '').replace(/""/g, '"')).join('\t');
+      })
+      .join('\n');
+
+    await navigator.clipboard.writeText(tsvData);
+    return true;
+  } catch (err) {
+    console.error('Clipboard copy failed:', err);
+    return false;
+  }
+}

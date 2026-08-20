@@ -187,27 +187,29 @@ export default function App() {
   const totalLDToday = ldLogs.reduce((sum, log) => sum + log.amount, 0);
 
   return (
-    <div className="min-h-screen bg-[#0b0e17] text-slate-100 font-sans flex flex-col selection:bg-purple-500 selection:text-white">
+    <div className="min-h-screen bg-[#0b0e17] print:bg-white print:text-black text-slate-100 font-sans flex flex-col selection:bg-purple-500 selection:text-white">
       {/* Top Header & Navigation */}
-      <Header
-        currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
-        selectedDate={selectedDate}
-        setSelectedDate={setSelectedDate}
-        totalWorkingStaff={totalWorkingStaff}
-        totalLDToday={totalLDToday}
-        onOpenStaffManager={() => setIsStaffModalOpen(true)}
-        onOpenAdminManager={() => setIsAdminModalOpen(true)}
-        onOpenGoogleSheets={() => setIsGoogleSheetsModalOpen(true)}
-        onResetDemoData={handleResetDemoData}
-        onLogout={handleLogout}
-        onBackupData={handleBackupData}
-        onRestoreData={handleRestoreData}
-        currentUser={currentUser}
-      />
+      <div className="print:hidden">
+        <Header
+          currentTab={currentTab}
+          setCurrentTab={setCurrentTab}
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          totalWorkingStaff={totalWorkingStaff}
+          totalLDToday={totalLDToday}
+          onOpenStaffManager={() => setIsStaffModalOpen(true)}
+          onOpenAdminManager={() => setIsAdminModalOpen(true)}
+          onOpenGoogleSheets={() => setIsGoogleSheetsModalOpen(true)}
+          onResetDemoData={handleResetDemoData}
+          onLogout={handleLogout}
+          onBackupData={handleBackupData}
+          onRestoreData={handleRestoreData}
+          currentUser={currentUser}
+        />
+      </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 print:p-0 print:m-0 print:max-w-none">
         {currentTab === 'attendance' && currentUser.permissions.canAccessAttendance && (
           <AttendanceTab
             dateStr={selectedDate}
@@ -218,7 +220,6 @@ export default function App() {
             onRefreshDate={refreshData}
           />
         )}
-
         {currentTab === 'ld' && currentUser.permissions.canAccessLD && (
           <LDTrackingTab
             dateStr={selectedDate}
@@ -229,7 +230,6 @@ export default function App() {
             onRefreshData={refreshData}
           />
         )}
-
         {currentTab === 'report' && currentUser.permissions.canAccessReport && (
           <DailyReportTab
             dateStr={selectedDate}
@@ -274,7 +274,7 @@ export default function App() {
       />
 
       {/* Lounge Footer */}
-      <footer className="border-t border-slate-900 bg-[#080a12] py-4 text-center text-xs text-slate-500">
+      <footer className="border-t border-slate-900 bg-[#080a12] py-4 text-center text-xs text-slate-500 print:hidden">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>
             🎵 GLEE ANGELS Staff & LD Electronic Management System
