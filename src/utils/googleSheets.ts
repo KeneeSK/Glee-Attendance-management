@@ -328,6 +328,7 @@ export async function syncAllDataToGoogleSheets(
     'Check-Out Time',
     'Work Duration (HH:MM)',
     'Decimal Hours (for Payroll)',
+    'LD Count',
     'Assigned Tables',
     'Manager Note',
     'Record ID',
@@ -342,9 +343,17 @@ export async function syncAllDataToGoogleSheets(
 
   // Calculate tables per staff for the attendance sheet
   const staffTablesForDateMap = new Map<string, string[]>();
+  const staffLDCountForDateMap = new Map<string, number>();
   allLDLogs.forEach((log) => {
-    if (!log.date || !log.staffId || !log.tableNo) return;
+    if (!log.date || !log.staffId) return;
     const key = `${log.date}_${log.staffId}`;
+    
+    // LD count map
+    const currCount = staffLDCountForDateMap.get(key) || 0;
+    staffLDCountForDateMap.set(key, currCount + (log.amount || 0));
+
+    // table map
+    if (!log.tableNo) return;
     const list = staffTablesForDateMap.get(key) || [];
     if (!list.includes(log.tableNo)) {
       list.push(log.tableNo);
@@ -375,6 +384,7 @@ export async function syncAllDataToGoogleSheets(
         : 0;
 
     const assignedTables = staffTablesForDateMap.get(`${rec.date}_${rec.staffId}`) || [];
+    const ldCount = staffLDCountForDateMap.get(`${rec.date}_${rec.staffId}`) || 0;
 
     return [
       rec.date,
@@ -385,10 +395,11 @@ export async function syncAllDataToGoogleSheets(
       rec.checkInTime || '-',
       rec.checkOutTime || '-',
       workDurationStr,
-      decimalHours,
+      decimalHours.toString(),
+      ldCount,
       assignedTables.join(', ') || '-',
       rec.note || '',
-      rec.id || `att_${rec.date}_${rec.staffId}`,
+      rec.id,
       formattedSyncTime,
     ];
   });
@@ -687,6 +698,14 @@ export function generateAllTablesCSV(): {
   staffList.forEach((s) => staffMap.set(s.id, s));
 
   // 1. Attendance
+  const staffLDCountForDateMap = new Map<string, number>();
+  allLDLogs.forEach((log) => {
+    if (!log.date || !log.staffId) return;
+    const key = `${log.date}_${log.staffId}`;
+    const currCount = staffLDCountForDateMap.get(key) || 0;
+    staffLDCountForDateMap.set(key, currCount + (log.amount || 0));
+  });
+
   const attHeaders = [
     'Date',
     'Staff ID',
@@ -696,6 +715,7 @@ export function generateAllTablesCSV(): {
     'Check In',
     'Check Out',
     'Worked Hours',
+    'LD Count',
     'Notes',
   ];
   const attRows = allAttendance.map((rec) => {
@@ -713,6 +733,8 @@ export function generateAllTablesCSV(): {
     else if (rec.isLate) status = 'Late';
     else if (rec.checkInTime) status = 'Present';
 
+    const ldCount = staffLDCountForDateMap.get(`${rec.date}_${rec.staffId}`) || 0;
+
     return [
       rec.date,
       rec.staffId,
@@ -722,6 +744,7 @@ export function generateAllTablesCSV(): {
       rec.checkInTime || '',
       rec.checkOutTime || '',
       workHours,
+      ldCount,
       rec.note || '',
     ];
   });
