@@ -1,11 +1,4 @@
-import {
-  signInWithPopup,
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  User,
-  signOut,
-} from 'firebase/auth';
-import { auth } from '../lib/firebase';
+
 import {
   loadStaffList,
   loadAllAttendance,
@@ -15,20 +8,43 @@ import {
 import { calculateWorkingTime, parseTimeToMinutes } from './time';
 import { Staff, AttendanceRecord, LDLogEntry } from '../types';
 
+import firebaseConfig from '../../firebase-applet-config.json';
+
 export const GOOGLE_SHEETS_SCOPES = [
   'https://www.googleapis.com/auth/spreadsheets',
   'https://www.googleapis.com/auth/drive.file',
+  'https://www.googleapis.com/auth/userinfo.email',
+  'https://www.googleapis.com/auth/userinfo.profile'
 ];
-
-const provider = new GoogleAuthProvider();
-GOOGLE_SHEETS_SCOPES.forEach((scope) => provider.addScope(scope));
-provider.setCustomParameters({
-  prompt: 'select_account consent',
-});
 
 // In-memory token cache as required by workspace-integration skill
 let cachedAccessToken: string | null = null;
-let isSigningIn = false;
+let tokenClient: any = null;
+
+const loadGSI = (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    if (typeof window !== 'undefined' && (window as any).google?.accounts?.oauth2) {
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Failed to load Google Identity Services script.'));
+    document.head.appendChild(script);
+  });
+};
+
+const fetchUserProfile = async (accessToken: string) => {
+  const res = await fetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+  if (!res.ok) throw new Error('Failed to fetch user profile');
+  return res.json();
+};
+
 
 const SHEETS_CONFIG_KEY = 'glee_angels_google_sheets_config_v1';
 
@@ -72,54 +88,56 @@ export function clearGoogleSheetsConfig(): void {
 
 // Authentication Listeners
 export const initGoogleAuthListener = (
-  onAuthSuccess?: (user: User, token: string) => void,
+  onAuthSuccess?: (user: any, token: string) => void,
   onAuthFailure?: () => void
 ) => {
-  return onAuthStateChanged(auth, async (user: User | null) => {
-    if (user) {
-      if (cachedAccessToken) {
-        if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken);
-      } else if (!isSigningIn) {
-        if (onAuthFailure) onAuthFailure();
-      }
-    } else {
-      cachedAccessToken = null;
-      if (onAuthFailure) onAuthFailure();
-    }
-  });
+  if (cachedAccessToken && onAuthSuccess) {
+    onAuthSuccess({ email: '', displayName: '', photoURL: '' }, cachedAccessToken);
+  } else if (onAuthFailure) {
+    onAuthFailure();
+  }
 };
 
-export const signInWithGoogleAccount = async (): Promise<{ user: User; accessToken: string }> => {
-  try {
-    isSigningIn = true;
-    const result = await signInWithPopup(auth, provider);
-    const credential = GoogleAuthProvider.credentialFromResult(result);
-    if (!credential?.accessToken) {
-      throw new Error('Could not obtain Google OAuth access token. Please verify permissions.');
+export const signInWithGoogleAccount = async (): Promise<{ user: any; accessToken: string }> => {
+  await loadGSI();
+  return new Promise((resolve, reject) => {
+    try {
+      if (!tokenClient) {
+        tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
+          client_id: firebaseConfig.oAuthClientId,
+          scope: GOOGLE_SHEETS_SCOPES.join(' '),
+          callback: async (response: any) => {
+            if (response.error !== undefined) {
+              let msg = response.error;
+              if (response.error === 'popup_closed_by_user') {
+                msg = 'Sign-in popup was closed before completing authorization.';
+              }
+              reject(new Error(msg));
+              return;
+            }
+            cachedAccessToken = response.access_token;
+            try {
+              const profile = await fetchUserProfile(cachedAccessToken!);
+              saveGoogleSheetsConfig({
+                userEmail: profile.email || '',
+                userName: profile.name || '',
+                userPhoto: profile.picture || '',
+              });
+              resolve({ 
+                user: { email: profile.email, displayName: profile.name, photoURL: profile.picture }, 
+                accessToken: cachedAccessToken! 
+              });
+            } catch (err) {
+              reject(err);
+            }
+          },
+        });
+      }
+      tokenClient.requestAccessToken({ prompt: 'consent' });
+    } catch (err) {
+      reject(err);
     }
-
-    cachedAccessToken = credential.accessToken;
-
-    // Save user info to local config
-    saveGoogleSheetsConfig({
-      userEmail: result.user.email || '',
-      userName: result.user.displayName || '',
-      userPhoto: result.user.photoURL || '',
-    });
-
-    return { user: result.user, accessToken: cachedAccessToken };
-  } catch (error: any) {
-    console.error('Google Sign-In Error:', error);
-    let msg = error.message || 'Failed to authenticate with Google.';
-    if (error.code === 'auth/popup-closed-by-user') {
-      msg = 'Sign-in popup was closed before completing authorization.';
-    } else if (error.code === 'auth/cancelled-popup-request') {
-      msg = 'Only one sign-in popup can be opened at a time.';
-    }
-    throw new Error(msg);
-  } finally {
-    isSigningIn = false;
-  }
+  });
 };
 
 export const getGoogleAccessToken = async (): Promise<string | null> => {
@@ -127,11 +145,16 @@ export const getGoogleAccessToken = async (): Promise<string | null> => {
 };
 
 export const logoutGoogleAccount = async (): Promise<void> => {
-  try {
-    await signOut(auth);
-  } catch (e) {
-    console.warn('SignOut warning:', e);
+  if (cachedAccessToken) {
+    try {
+      if (typeof window !== 'undefined' && (window as any).google?.accounts?.oauth2) {
+        (window as any).google.accounts.oauth2.revoke(cachedAccessToken, () => {});
+      }
+    } catch (e) {
+      console.warn('Revoke error', e);
+    }
   }
+  cachedAccessToken = null;
   clearGoogleSheetsConfig();
 };
 
