@@ -1,71 +1,24 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { InventoryCategory, InventoryItem, DailyInventoryLog, AdminUser } from '../types';
-import { 
-  loadInventoryCategories, 
-  loadInventoryItems, 
-  loadInventoryLogForDate, 
-  updateInventoryLog,
-  normalizeDateStr 
-} from '../utils/storage';
-import { getTodayDateString } from '../utils/initialData';
-import { Save, Calendar, Printer, X, ClipboardList } from 'lucide-react';
+import re
 
-interface InventoryTabProps {
-  currentAdmin: AdminUser | null;
-}
+with open('src/components/InventoryTab.tsx', 'r') as f:
+    content = f.read()
 
-export const InventoryTab: React.FC<InventoryTabProps> = ({ currentAdmin }) => {
-  const [currentDate, setCurrentDate] = useState<string>(getTodayDateString());
-  const [categories, setCategories] = useState<InventoryCategory[]>([]);
-  const [items, setItems] = useState<InventoryItem[]>([]);
-  const [log, setLog] = useState<DailyInventoryLog | null>(null);
-  
-  // Input tracking
-  const [entries, setEntries] = useState<Record<string, string>>({});
-  const [isSaving, setIsSaving] = useState(false);
+# Update imports
+content = content.replace("import { Save, Calendar } from 'lucide-react';", "import { Save, Calendar, Printer, X, ClipboardList } from 'lucide-react';")
+
+# Add state
+state_injection = """  const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [showPrintModal, setShowPrintModal] = useState(false);
 
   const handlePrint = () => {
     window.print();
-  };
+  };"""
 
-  useEffect(() => {
-    setCategories(loadInventoryCategories().sort((a, b) => a.order - b.order));
-    setItems(loadInventoryItems().sort((a, b) => a.order - b.order));
-  }, []);
+content = content.replace("  const [isSaving, setIsSaving] = useState(false);\n  const [saveMessage, setSaveMessage] = useState('');", state_injection)
 
-  useEffect(() => {
-    const loadedLog = loadInventoryLogForDate(currentDate);
-    if (loadedLog) {
-      setLog(loadedLog);
-      setEntries(loadedLog.entries || {});
-    } else {
-      setLog(null);
-      setEntries({});
-    }
-    setSaveMessage('');
-  }, [currentDate]);
-
-  const itemsByCategory = useMemo(() => {
-    const map = new Map<string, InventoryItem[]>();
-    items.forEach(item => {
-      if (!map.has(item.categoryId)) {
-        map.set(item.categoryId, []);
-      }
-      map.get(item.categoryId)!.push(item);
-    });
-    return map;
-  }, [items]);
-
-  const handleEntryChange = (itemId: string, val: string) => {
-    setEntries(prev => ({
-      ...prev,
-      [itemId]: val
-    }));
-  };
-
-
+# Add renderPrintableSheet
+print_func = """
   const renderPrintableSheet = () => {
     const generatedTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     const docId = `INV-${currentDate.replace(/-/g, '')}`;
@@ -146,41 +99,12 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({ currentAdmin }) => {
       </div>
     );
   };
+"""
 
-  const handleSave = () => {
-    if (!currentAdmin) return;
-    setIsSaving(true);
-    setSaveMessage('');
-    
-    try {
-      const newLog: DailyInventoryLog = {
-        id: log?.id || `inv_${currentDate}_${Date.now()}`,
-        date: normalizeDateStr(currentDate),
-        entries,
-        updatedAt: new Date().toISOString(),
-        updatedBy: currentAdmin.username
-      };
-      updateInventoryLog(newLog);
-      setLog(newLog);
-      setSaveMessage('Inventory saved successfully.');
-    } catch (e) {
-      setSaveMessage('Failed to save.');
-    } finally {
-      setTimeout(() => setIsSaving(false), 500);
-      setTimeout(() => setSaveMessage(''), 3000);
-    }
-  };
+content = content.replace("  const handleSave = () => {", print_func + "\n  const handleSave = () => {")
 
-  if (!currentAdmin?.permissions.canManageInventory && currentAdmin?.role !== 'super') {
-    return (
-      <div className="p-8 text-center bg-slate-800 rounded-2xl shadow-xl mt-6 border border-slate-700">
-        <h2 className="text-xl font-bold text-slate-300">Access Denied</h2>
-        <p className="text-slate-400 mt-2">You do not have permission to manage inventory.</p>
-      </div>
-    );
-  }
-
-  return (
+# Update main render wrapper to hide on print, and add print button
+main_render = """  return (
     <>
       <div className="animate-fade-in pb-20 print:hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between bg-slate-800/80 p-5 rounded-2xl border border-slate-700/50 shadow-xl mb-6 gap-4 backdrop-blur-sm">
@@ -219,59 +143,17 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({ currentAdmin }) => {
               <span>{isSaving ? 'Saving...' : 'Save Log'}</span>
             </button>
           </div>
-        </div>
+        </div>"""
 
-      {saveMessage && (
-        <div className={`mb-6 p-4 rounded-xl text-sm font-medium ${
-          saveMessage.includes('success') 
-            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-            : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-        }`}>
-          {saveMessage}
-        </div>
-      )}
+content = re.sub(
+    r"  return \(\n    <div className=\"animate-fade-in pb-20\">\n      <div className=\"flex flex-col md:flex-row md:items-center justify-between bg-slate-800/80 p-5 rounded-2xl border border-slate-700/50 shadow-xl mb-6 gap-4 backdrop-blur-sm\">\n        <div>.*?</div>\n\n        <div className=\"flex items-center gap-3\">\n          <div className=\"relative\">\n            <div className=\"absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none\">\n              <Calendar className=\"h-5 w-5 text-indigo-400\" />\n            </div>\n            <input\n              type=\"date\"\n              value=\{currentDate\}\n              onChange=\{\(e\) => setCurrentDate\(e\.target\.value\)\}\n              className=\"pl-10 pr-4 py-2\.5 bg-slate-900 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-400 transition-all font-medium\"\n            />\n          </div>\n          <button\n            onClick=\{handleSave\}\n            disabled=\{isSaving\}\n            className=\"flex items-center gap-2 px-5 py-2\.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all shadow-lg shadow-indigo-500/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed font-medium\"\n          >\n            <Save className=\"w-4 h-4\" />\n            <span>\{isSaving \? 'Saving\.\.\.' : 'Save Log'\}</span>\n          </button>\n        </div>\n      </div>",
+    main_render,
+    content,
+    flags=re.DOTALL
+)
 
-      {log?.updatedBy && (
-        <div className="mb-6 px-4 text-sm text-slate-400">
-          Last updated by <span className="text-indigo-300">{log.updatedBy}</span> at{' '}
-          {new Date(log.updatedAt).toLocaleString('en-US', { timeStyle: 'short', dateStyle: 'medium' })}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {categories.map((cat) => {
-          const catItems = itemsByCategory.get(cat.id) || [];
-          if (catItems.length === 0) return null;
-
-          return (
-            <div key={cat.id} className="bg-slate-800 rounded-2xl border border-slate-700/50 overflow-hidden shadow-lg">
-              <div className="px-6 py-4 bg-slate-800/50 border-b border-slate-700/50 flex justify-between items-center">
-                <h3 className="font-semibold text-slate-200 tracking-wide">{cat.name}</h3>
-                <span className="text-xs font-medium bg-slate-700 text-slate-300 px-2 py-1 rounded-full">
-                  {catItems.length} items
-                </span>
-              </div>
-              <div className="p-4 space-y-2">
-                {catItems.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-700/30 transition-colors group">
-                    <span className="text-slate-300 font-medium group-hover:text-white transition-colors">
-                      {item.name}
-                    </span>
-                    <input
-                      type="text"
-                      placeholder="Qty"
-                      value={entries[item.id] || ''}
-                      onChange={(e) => handleEntryChange(item.id, e.target.value)}
-                      className="w-24 px-3 py-1.5 bg-slate-900 border border-slate-600 rounded-lg text-white text-right focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-400 transition-all font-mono"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      </div>
+# Replace the closing div of the main render and add the Modal and Print view
+modal_and_print_html = """      </div>
 
       {/* PDF / Print Preview Modal */}
       {showPrintModal && (
@@ -337,3 +219,10 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({ currentAdmin }) => {
     </>
   );
 };
+"""
+
+content = re.sub(r"      </div>\n    </div>\n  \);\n};\n$", modal_and_print_html, content)
+
+with open('src/components/InventoryTab.tsx', 'w') as f:
+    f.write(content)
+
