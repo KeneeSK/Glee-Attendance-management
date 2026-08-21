@@ -61,8 +61,8 @@ export const DailyReportTab: React.FC<DailyReportTabProps> = ({
 
   // Aggregate data per staff member
   const staffSummaryList = staffList.map((staff) => {
-    const att = attendanceRecords.find((a) => a.staffId === staff.id);
-    const staffLDLogs = ldLogs.filter((l) => l.staffId === staff.id);
+    const att = attendanceRecords.find((a) => a.staffId === staff.id && a.date === dateStr);
+    const staffLDLogs = ldLogs.filter((l) => l.staffId === staff.id && l.date === dateStr);
     const totalLD = staffLDLogs.reduce((sum, l) => sum + l.amount, 0);
 
     const tablesSet = new Set<string>();

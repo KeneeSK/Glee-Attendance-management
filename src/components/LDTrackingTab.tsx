@@ -33,12 +33,12 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
   }, [ldLogs]);
 
   // Start with clean initial view (no tables open by default)
-  const existingTablesInLogs: string[] = Array.from(new Set(ldLogs.map((l) => l.tableNo)));
+  const existingTablesInLogs: string[] = Array.from(new Set(ldLogs.filter(l => l.date === dateStr).map((l) => l.tableNo)));
   const [activeTables, setActiveTables] = useState<string[]>([]);
   const [selectedStaffForTable, setSelectedStaffForTable] = useState<Record<string, string>>(() => {
     const map: Record<string, string> = {};
     existingTablesInLogs.forEach((t) => {
-      const logsForTable = ldLogs.filter((l) => l.tableNo === t);
+      const logsForTable = ldLogs.filter((l) => l.tableNo === t && l.date === dateStr);
       if (logsForTable.length > 0) {
         map[t] = logsForTable[logsForTable.length - 1].staffId;
       }
@@ -146,7 +146,7 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
 
   // Compute aggregated LD count per table and staff
   const getTableStaffSummary = (tableNo: string) => {
-    const tableLogs = ldLogs.filter((l) => l.tableNo === tableNo);
+    const tableLogs = ldLogs.filter((l) => l.tableNo === tableNo && l.date === dateStr);
     const totalLD = tableLogs.reduce((acc, curr) => acc + curr.amount, 0);
 
     const staffBreakdown = new Map<string, { staffName: string; count: number }>();
@@ -479,10 +479,10 @@ export const LDTrackingTab: React.FC<LDTrackingTabProps> = ({
             <History className="w-4 h-4 text-cyan-400" />
             <span>Live LD Entry Timeline ({dateStr})</span>
           </h3>
-          <span className="text-xs text-slate-400">Total {ldLogs.length} entries</span>
+          <span className="text-xs text-slate-400">Total {ldLogs.filter(l => l.date === dateStr).length} entries</span>
         </div>
 
-        {ldLogs.length === 0 ? (
+        {ldLogs.filter(l => l.date === dateStr).length === 0 ? (
           <div className="py-6 text-center text-slate-500 text-xs">
             No LD drinks recorded today yet. Click the + button on any table card above to log drinks!
           </div>
