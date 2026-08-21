@@ -261,6 +261,19 @@ export const Header: React.FC<HeaderProps> = ({
               <span>Checklist</span>
             </button>
           )}
+          {(currentUser.role === 'super' || currentUser.permissions?.canManageInventory) && (
+            <button
+              onClick={() => setCurrentTab('inventory')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
+                currentTab === 'inventory'
+                  ? 'bg-amber-600/30 text-amber-200 border border-amber-500/50 shadow-md shadow-amber-950/50 neon-border-amber'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <Package className={`w-4 h-4 ${currentTab === 'inventory' ? 'text-amber-400' : ''}`} />
+              <span>Inventory</span>
+            </button>
+          )}
         </div>
       </div>
     </header>
