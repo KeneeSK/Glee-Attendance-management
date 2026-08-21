@@ -67,6 +67,8 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
       ldLogs: number;
       staff: number;
       payrollSummaries: number;
+      checklists: number;
+      inventoryLogs: number;
     };
   } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -320,6 +322,8 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
                     <div>LD Logs: <strong className="text-white">{syncResult.counts.ldLogs}</strong></div>
                     <div>Staff Roster: <strong className="text-white">{syncResult.counts.staff}</strong></div>
                     <div>Payroll Mths: <strong className="text-white">{syncResult.counts.payrollSummaries}</strong></div>
+                    <div>Checklists: <strong className="text-white">{syncResult.counts.checklists}</strong></div>
+                    <div>Inventory: <strong className="text-white">{syncResult.counts.inventoryLogs}</strong></div>
                   </div>
                 )}
               </div>
