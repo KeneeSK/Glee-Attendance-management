@@ -15,6 +15,7 @@ const KEYS = {
   INVENTORY_CATEGORIES: 'lounge_inventory_categories_v1',
   INVENTORY_ITEMS: 'lounge_inventory_items_v1',
   INVENTORY_LOGS: 'lounge_inventory_logs_v1',
+  REPORT_SETTINGS: 'lounge_report_settings_v1',
 };
 
 export function normalizeDateStr(d: string): string {
@@ -539,6 +540,35 @@ export function saveAllLDLogs(logs: LDLogEntry[]): void {
   }
 }
 
+export function loadReportPassword(): string {
+  try {
+    const raw = localStorage.getItem(KEYS.REPORT_SETTINGS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && parsed.password) {
+        return String(parsed.password).trim();
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load report password:', e);
+  }
+  return '8888';
+}
+
+export function saveReportPassword(newPass: string): void {
+  try {
+    const safePass = (newPass || '8888').trim();
+    const dataToSave = {
+      password: safePass,
+      updatedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(KEYS.REPORT_SETTINGS, JSON.stringify(dataToSave));
+    syncToFirestore('reportSettings', dataToSave);
+  } catch (e) {
+    console.error('Failed to save report password:', e);
+  }
+}
+
 // Fetch database from Firestore and smart merge client state
 export async function fetchServerDatabase(): Promise<boolean> {
   try {
@@ -585,6 +615,20 @@ export async function fetchServerDatabase(): Promise<boolean> {
         }
       }
     }
+
+    // Also fetch reportSettings (password)
+    try {
+      const repSnap = await getDoc(doc(db, 'loungeData', 'reportSettings'));
+      if (repSnap.exists()) {
+        const repData = repSnap.data()?.data;
+        if (repData && typeof repData === 'object' && repData.password) {
+          localStorage.setItem(KEYS.REPORT_SETTINGS, JSON.stringify(repData));
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to fetch reportSettings:', e);
+    }
+
     return fetched;
   } catch (err) {
     console.warn('Could not fetch server database:', err);
@@ -649,6 +693,25 @@ export function subscribeToServerDatabase(onUpdate: () => void): () => void {
       console.error(`Firebase snapshot error for ${c.id}:`, error);
     });
   });
+
+  // Subscribe to reportSettings for real-time password changes
+  const reportSettingsUnsub = onSnapshot(doc(db, 'loungeData', 'reportSettings'), (snapshot) => {
+    if (snapshot.exists()) {
+      const repData = snapshot.data()?.data;
+      if (repData && typeof repData === 'object' && repData.password) {
+        const current = localStorage.getItem(KEYS.REPORT_SETTINGS);
+        const newStr = JSON.stringify(repData);
+        if (current !== newStr) {
+          localStorage.setItem(KEYS.REPORT_SETTINGS, newStr);
+          onUpdate();
+        }
+      }
+    }
+  }, (err) => {
+    console.warn('Firebase reportSettings snapshot error:', err);
+  });
+
+  unsubscribes.push(reportSettingsUnsub);
 
   return () => {
     unsubscribes.forEach(unsub => unsub());

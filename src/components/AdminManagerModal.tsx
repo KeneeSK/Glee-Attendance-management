@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Plus, X, Save, Trash2, ShieldAlert } from 'lucide-react';
+import { ShieldCheck, Plus, X, Save, Trash2, ShieldAlert, KeyRound, Check } from 'lucide-react';
 import { AdminUser, AdminRoleType } from '../types';
-import { loadAdmins, saveAdmins } from '../utils/storage';
+import { loadAdmins, saveAdmins, loadReportPassword, saveReportPassword } from '../utils/storage';
 
 interface AdminManagerModalProps {
   isOpen: boolean;
@@ -12,12 +12,26 @@ interface AdminManagerModalProps {
 export const AdminManagerModal: React.FC<AdminManagerModalProps> = ({ isOpen, onClose, currentUser }) => {
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [editingAdmin, setEditingAdmin] = useState<AdminUser | null>(null);
+  const [reportPassword, setReportPassword] = useState<string>('');
+  const [reportPassSuccess, setReportPassSuccess] = useState<boolean>(false);
 
   useEffect(() => {
     if (isOpen) {
       setAdmins(loadAdmins());
+      setReportPassword(loadReportPassword());
     }
   }, [isOpen]);
+
+  const handleSaveReportPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reportPassword.trim() || reportPassword.trim().length < 4) {
+      alert('Report password must be at least 4 characters/digits.');
+      return;
+    }
+    saveReportPassword(reportPassword.trim());
+    setReportPassSuccess(true);
+    setTimeout(() => setReportPassSuccess(false), 2000);
+  };
 
   if (!isOpen) return null;
 
@@ -194,6 +208,44 @@ export const AdminManagerModal: React.FC<AdminManagerModalProps> = ({ isOpen, on
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Boss Report Password Management Section */}
+            <div className="pt-4 border-t border-slate-800">
+              <div className="p-4 rounded-2xl bg-[#0b0e17] border border-purple-900/40 space-y-3">
+                <div className="flex items-center gap-2 text-purple-300">
+                  <KeyRound className="w-4 h-4 text-purple-400" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider">Boss Report Access PIN / Password</h4>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Password required to view the English Boss Live Report (no username/ID needed).
+                </p>
+                <form onSubmit={handleSaveReportPassword} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={reportPassword}
+                    onChange={(e) => setReportPassword(e.target.value)}
+                    placeholder="e.g. 8888"
+                    className="flex-1 bg-[#161b2b] border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono font-bold text-purple-200 focus:outline-none focus:border-purple-500"
+                  />
+                  <button
+                    type="submit"
+                    className="px-3 py-2 bg-purple-700 hover:bg-purple-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                  >
+                    {reportPassSuccess ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-300" />
+                        <span>Saved</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-3.5 h-3.5" />
+                        <span>Update PIN</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
 

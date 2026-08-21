@@ -159,10 +159,10 @@ export const Header: React.FC<HeaderProps> = ({
                 const url = new URL(window.location.href);
                 url.searchParams.set('view', 'live-report');
                 navigator.clipboard.writeText(url.toString());
-                alert('Live Report Link copied to clipboard! Share this link with the boss.');
+                alert('Executive Live Report Link copied to clipboard!\n\n• The report is 100% in English.\n• Protected by password/PIN without requiring an ID.');
               }}
               className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold bg-amber-950/90 hover:bg-amber-900 text-amber-200 border border-amber-700/70 rounded-lg shadow-sm transition-colors cursor-pointer"
-              title="Copy link to Live Real-Time Dashboard"
+              title="Copy link to Live English Executive Report"
             >
               <Share2 className="w-3.5 h-3.5 text-amber-400" />
               <span className="hidden sm:inline">Share Report</span>
