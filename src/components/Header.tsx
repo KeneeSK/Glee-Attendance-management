@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TabType, AdminUser } from '../types';
-import { Calendar, Clock, Users, Wine, BarChart3, UserCog, RotateCcw, Music, LogOut, Download, Upload, ShieldCheck, ClipboardCheck, FileSpreadsheet, Package } from 'lucide-react';
+import { Calendar, Clock, Users, Wine, BarChart3, UserCog, RotateCcw, Music, LogOut, Share2, Download, Upload, ShieldCheck, ClipboardCheck, FileSpreadsheet, Package } from 'lucide-react';
 
 interface HeaderProps {
   currentTab: TabType;
@@ -151,6 +151,21 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
               <span className="hidden sm:inline">Google Sheets</span>
+            </button>
+
+            {/* Share Live Report Button */}
+            <button
+              onClick={() => {
+                const url = new URL(window.location.href);
+                url.searchParams.set('view', 'live-report');
+                navigator.clipboard.writeText(url.toString());
+                alert('Live Report Link copied to clipboard! Share this link with the boss.');
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold bg-amber-950/90 hover:bg-amber-900 text-amber-200 border border-amber-700/70 rounded-lg shadow-sm transition-colors cursor-pointer"
+              title="Copy link to Live Real-Time Dashboard"
+            >
+              <Share2 className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Share Report</span>
             </button>
 
             {/* Backup JSON Button */}

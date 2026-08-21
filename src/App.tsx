@@ -28,9 +28,20 @@ import { StaffManagerModal } from './components/StaffManagerModal';
 import { AuthScreen } from './components/AuthScreen';
 import { AdminManagerModal } from './components/AdminManagerModal';
 import { GoogleSheetsSyncModal } from './components/GoogleSheetsSyncModal';
+import { PublicLiveReport } from './components/PublicLiveReport';
+
 
 export default function App() {
+  // Check for public live view mode first
+  const urlParams = new URLSearchParams(window.location.search);
+  const isLiveView = urlParams.get('view') === 'live-report';
+
+  if (isLiveView) {
+    return <PublicLiveReport />;
+  }
+
   // Persist login state in localStorage
+
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
     () => localStorage.getItem('lounge_admin_session_v1') === 'true'
   );

@@ -37,6 +37,7 @@ import {
 } from 'recharts';
 
 interface DailyReportTabProps {
+  isPublicView?: boolean;
   dateStr: string;
   setDateStr: (date: string) => void;
   attendanceRecords: AttendanceRecord[];

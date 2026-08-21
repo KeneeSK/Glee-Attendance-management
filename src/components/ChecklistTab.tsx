@@ -5,11 +5,12 @@ import { CHECKLIST_ITEMS } from '../data/checklist';
 import { Save, Printer, ClipboardCheck, Edit3, FileDown, FileText, Building2, X } from 'lucide-react';
 
 interface ChecklistTabProps {
+  isPublicView?: boolean;
   dateStr: string;
   lastSyncTime?: number;
 }
 
-export function ChecklistTab({ dateStr, lastSyncTime }: ChecklistTabProps) {
+export function ChecklistTab({ dateStr, lastSyncTime, isPublicView }: ChecklistTabProps) {
   const [checklist, setChecklist] = useState<DailyChecklist>({
     date: dateStr,
     checkedItems: [],
@@ -147,14 +148,14 @@ export function ChecklistTab({ dateStr, lastSyncTime }: ChecklistTabProps) {
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <button
-            onClick={() => setShowPrintModal(true)}
+            onClick={() => setShowPrintModal(true)} disabled={isPublicView}
             className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border border-emerald-400/30 px-4 py-2 rounded-lg font-semibold transition-all shadow-lg shadow-emerald-950/50"
           >
             <FileText className="w-4 h-4 text-emerald-200" />
             <span>PDF Form Preview</span>
           </button>
           <button
-            onClick={handleSave}
+            onClick={handleSave} disabled={isPublicView}
             className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors ${
               isSaved
                 ? 'bg-purple-600 hover:bg-purple-500 text-white'

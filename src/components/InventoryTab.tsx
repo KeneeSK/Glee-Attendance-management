@@ -11,11 +11,17 @@ import { getTodayDateString } from '../utils/initialData';
 import { Save, Calendar, Printer, X, ClipboardList } from 'lucide-react';
 
 interface InventoryTabProps {
+  isPublicView?: boolean;
   currentAdmin: AdminUser | null;
+  dateStr?: string;
 }
 
-export const InventoryTab: React.FC<InventoryTabProps> = ({ currentAdmin }) => {
+export const InventoryTab: React.FC<InventoryTabProps> = ({ currentAdmin, isPublicView, dateStr }) => {
   const [currentDate, setCurrentDate] = useState<string>(getTodayDateString());
+
+  useEffect(() => {
+    if (dateStr) setCurrentDate(dateStr);
+  }, [dateStr]);
   const [categories, setCategories] = useState<InventoryCategory[]>([]);
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [log, setLog] = useState<DailyInventoryLog | null>(null);
@@ -171,7 +177,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({ currentAdmin }) => {
     }
   };
 
-  if (!currentAdmin?.permissions.canManageInventory && currentAdmin?.role !== 'super') {
+  if (!isPublicView && !currentAdmin?.permissions.canManageInventory && currentAdmin?.role !== 'super') {
     return (
       <div className="p-8 text-center bg-slate-800 rounded-2xl shadow-xl mt-6 border border-slate-700">
         <h2 className="text-xl font-bold text-slate-300">Access Denied</h2>
@@ -182,7 +188,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({ currentAdmin }) => {
 
   return (
     <>
-      <div className="animate-fade-in pb-20 print:hidden">
+      <div className={`animate-fade-in pb-20 print:hidden ${isPublicView ? 'hidden' : ''}`}>
         <div className="flex flex-col md:flex-row md:items-center justify-between bg-slate-800/80 p-5 rounded-2xl border border-slate-700/50 shadow-xl mb-6 gap-4 backdrop-blur-sm">
           <div>
             <h2 className="text-2xl font-bold text-white tracking-tight">Daily Inventory Check</h2>
@@ -331,7 +337,7 @@ export const InventoryTab: React.FC<InventoryTabProps> = ({ currentAdmin }) => {
       )}
 
       {/* Dedicated Hidden Print Page Container (Only visible during @media print) */}
-      <div className="hidden print:block w-full p-0 m-0">
+      <div className={`w-full p-0 m-0 ${isPublicView ? 'block' : 'hidden print:block'}`}>
         {renderPrintableSheet()}
       </div>
     </>
