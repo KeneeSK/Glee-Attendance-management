@@ -40,6 +40,7 @@ export const AdminManagerModal: React.FC<AdminManagerModalProps> = ({ isOpen, on
         canAccessReport: false,
         canManageStaff: false,
         canManageAdmins: false,
+        canManageInventory: false,
       },
       createdAt: new Date().toISOString(),
     };
@@ -71,6 +72,7 @@ export const AdminManagerModal: React.FC<AdminManagerModalProps> = ({ isOpen, on
         canAccessReport: true,
         canManageStaff: true,
         canManageAdmins: true,
+        canManageInventory: true,
       };
     } else if (finalAdmin.role === 'attendance_only') {
       finalAdmin.permissions = {
@@ -79,6 +81,7 @@ export const AdminManagerModal: React.FC<AdminManagerModalProps> = ({ isOpen, on
         canAccessReport: false,
         canManageStaff: false,
         canManageAdmins: false,
+        canManageInventory: false,
       };
     } else if (finalAdmin.role === 'ld_only') {
       finalAdmin.permissions = {
@@ -87,6 +90,7 @@ export const AdminManagerModal: React.FC<AdminManagerModalProps> = ({ isOpen, on
         canAccessReport: false,
         canManageStaff: false,
         canManageAdmins: false,
+        canManageInventory: false,
       };
     } else if (finalAdmin.role === 'report_only') {
       finalAdmin.permissions = {
@@ -95,6 +99,7 @@ export const AdminManagerModal: React.FC<AdminManagerModalProps> = ({ isOpen, on
         canAccessReport: true,
         canManageStaff: false,
         canManageAdmins: false,
+        canManageInventory: false,
       };
     }
 
@@ -249,6 +254,7 @@ export const AdminManagerModal: React.FC<AdminManagerModalProps> = ({ isOpen, on
                       <option value="attendance_only">Attendance Only</option>
                       <option value="ld_only">LD Tracking Only</option>
                       <option value="report_only">Reports Only</option>
+                      <option value="inventory_only">Inventory Only</option>
                       <option value="custom">Custom Permissions</option>
                     </select>
                   </div>

@@ -41,9 +41,9 @@ export interface TableSummary {
   assignedStaff: { staffId: string; staffName: string; count: number }[];
 }
 
-export type TabType = 'attendance' | 'ld' | 'report' | 'checklist';
+export type TabType = 'attendance' | 'ld' | 'report' | 'checklist' | 'inventory';
 
-export type AdminRoleType = 'super' | 'attendance_only' | 'ld_only' | 'report_only' | 'custom';
+export type AdminRoleType = 'super' | 'attendance_only' | 'ld_only' | 'report_only' | 'inventory_only' | 'custom';
 
 export interface DailyChecklist {
   date: string; // YYYY-MM-DD
@@ -59,6 +59,7 @@ export interface AdminPermissions {
   canAccessReport: boolean;
   canManageStaff: boolean;
   canManageAdmins: boolean;
+  canManageInventory: boolean;
 }
 
 export interface AdminUser {
@@ -69,4 +70,25 @@ export interface AdminUser {
   role: AdminRoleType;
   permissions: AdminPermissions;
   createdAt: string;
+}
+
+export interface InventoryCategory {
+  id: string;
+  name: string;
+  order: number;
+}
+
+export interface InventoryItem {
+  id: string;
+  categoryId: string;
+  name: string;
+  order: number;
+}
+
+export interface DailyInventoryLog {
+  id: string;
+  date: string; // YYYY-MM-DD
+  entries: Record<string, string>; // itemId -> quantity
+  updatedAt: string;
+  updatedBy: string;
 }

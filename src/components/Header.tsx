@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TabType, AdminUser } from '../types';
-import { Calendar, Clock, Users, Wine, BarChart3, UserCog, RotateCcw, Music, LogOut, Download, Upload, ShieldCheck, ClipboardCheck, FileSpreadsheet } from 'lucide-react';
+import { Calendar, Clock, Users, Wine, BarChart3, UserCog, RotateCcw, Music, LogOut, Download, Upload, ShieldCheck, ClipboardCheck, FileSpreadsheet, Package } from 'lucide-react';
 
 interface HeaderProps {
   currentTab: TabType;

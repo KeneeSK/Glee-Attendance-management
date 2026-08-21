@@ -23,6 +23,7 @@ import { AttendanceTab } from './components/AttendanceTab';
 import { LDTrackingTab } from './components/LDTrackingTab';
 import { DailyReportTab } from './components/DailyReportTab';
 import { ChecklistTab } from './components/ChecklistTab';
+import { InventoryTab } from './components/InventoryTab';
 import { StaffManagerModal } from './components/StaffManagerModal';
 import { AuthScreen } from './components/AuthScreen';
 import { AdminManagerModal } from './components/AdminManagerModal';
@@ -247,7 +248,8 @@ export default function App() {
             lastSyncTime={lastSyncTime}
           />
         )}
-      </main>
+        {currentTab === 'inventory' && <InventoryTab currentAdmin={currentUser} />}
+    </main>
 
       {/* Roster Management Modal */}
       <StaffManagerModal
