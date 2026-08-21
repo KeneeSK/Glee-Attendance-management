@@ -57,6 +57,21 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
     return true;
   });
 
+  const getRoleHierarchyRank = (role: string): number => {
+    const r = role.toUpperCase();
+    if (r.includes('DAILY OPERATIONS')) return 1;
+    if (r.includes('FINANCIAL & LOGISTIC') || r.includes('LOGISTICS')) return 2;
+    if (r.includes('HEAD WAIT')) return 3;
+    if (r.includes('DJ') || r.includes('SOUND')) return 4;
+    if (r.includes('HEAD CHEF')) return 5;
+    if (r.includes('KITCHEN')) return 6;
+    if (r.includes('CASHIER')) return 7;
+    if (r.includes('WAIT')) return 8;
+    if (r.includes('UTILITY')) return 9;
+    if (r.includes('DOORMAN') || r.includes('SECURITY')) return 10;
+    return 50;
+  };
+
   const groupedFilteredRecords = Array.from(
     filteredRecords.reduce((acc, rec) => {
       const staffObj = staffList.find((s) => s.id === rec.staffId);
@@ -65,7 +80,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
       acc.get(role)!.push(rec);
       return acc;
     }, new Map<string, typeof filteredRecords>())
-  );
+  ).sort(([roleA], [roleB]) => getRoleHierarchyRank(roleA) - getRoleHierarchyRank(roleB));
 
   const handleToggleLate = (rec: AttendanceRecord) => {
     const newLate = !rec.isLate;
