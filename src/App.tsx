@@ -173,14 +173,6 @@ export default function App() {
     refreshData();
   };
 
-  // Handler for Resetting Demo Data
-  const handleResetDemoData = () => {
-    if (window.confirm('Are you sure you want to reset all records to default clean data? This will clear all attendance and LD logs for today.')) {
-      resetAllDataToDemo();
-      refreshData();
-    }
-  };
-
   // Computed total stats for today (On Duty: staff who have actually checked in and are not absent/off/suspended)
   const totalWorkingStaff = attendanceRecords.filter(
     (r) => Boolean(r.checkInTime) && !r.isAbsent && !r.isDayOff && !r.isSuspended
@@ -201,7 +193,6 @@ export default function App() {
           onOpenStaffManager={() => setIsStaffModalOpen(true)}
           onOpenAdminManager={() => setIsAdminModalOpen(true)}
           onOpenGoogleSheets={() => setIsGoogleSheetsModalOpen(true)}
-          onResetDemoData={handleResetDemoData}
           onLogout={handleLogout}
           onBackupData={handleBackupData}
           onRestoreData={handleRestoreData}

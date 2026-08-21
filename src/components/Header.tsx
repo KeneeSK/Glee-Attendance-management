@@ -12,7 +12,6 @@ interface HeaderProps {
   onOpenStaffManager: () => void;
   onOpenAdminManager: () => void;
   onOpenGoogleSheets: () => void;
-  onResetDemoData: () => void;
   onLogout: () => void;
   onBackupData: () => void;
   onRestoreData: (jsonStr: string) => void;
@@ -29,7 +28,6 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenStaffManager,
   onOpenAdminManager,
   onOpenGoogleSheets,
-  onResetDemoData,
   onLogout,
   onBackupData,
   onRestoreData,
@@ -181,16 +179,6 @@ export const Header: React.FC<HeaderProps> = ({
                   className="hidden"
                 />
               </label>
-            )}
-
-            {currentUser.role === 'super' && (
-              <button
-                onClick={onResetDemoData}
-                className="p-1.5 text-xs text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 border border-slate-800 hover:border-rose-900/40 rounded-lg transition-colors"
-                title="Reset Demo Data"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-              </button>
             )}
 
             {/* Logout / Lock Button */}
